@@ -1,46 +1,352 @@
-# Serverless Microservices Platform
+# 🚀 AWS Serverless Microservices with AI Agents
 
-A production-grade e-commerce platform demonstrating Pattern 1: Domain-Driven Serverless Microservices with independent CI/CD pipelines.
+[![AWS](https://img.shields.io/badge/AWS-Serverless-orange?logo=amazon-aws)](https://aws.amazon.com/)
+[![Terraform](https://img.shields.io/badge/IaC-Terraform-purple?logo=terraform)](https://www.terraform.io/)
+[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Architecture Overview
+> Production-grade serverless microservices platform with AI-powered shopping assistant and DevOps troubleshooting agent, built on AWS using Bedrock, Lambda, and the Model Context Protocol (MCP).
 
-This platform implements serverless microservices organized by bounded context, where each service:
-- Owns its domain logic and data
-- Has independent deployment pipelines
-- Reduces blast radius during deployments
-- Enables team autonomy
+## 📋 Table of Contents
 
-## Services
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Key Features](#key-features)
+- [Technologies Used](#technologies-used)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Cost Estimation](#cost-estimation)
+- [Documentation](#documentation)
+- [Demo](#demo)
+- [Contributing](#contributing)
 
-### 1. Cart Service (`/cart-service`)
-Manages shopping cart operations with dedicated Lambda functions and DynamoDB table.
+## 🎯 Overview
 
-### 2. Product Service (`/product-service`)
-Handles product catalog operations with dedicated Lambda functions and DynamoDB table.
+This project demonstrates a **production-grade serverless microservices architecture** on AWS, featuring:
 
-## Key Design Principles
+- **7 Independent Microservices** with separate CI/CD pipelines
+- **2 AI Agents** powered by AWS Bedrock (Claude 3)
+- **Unified MCP Server** for operational observability
+- **Complete Infrastructure as Code** using Terraform
+- **Production Features**: DLQ, CloudWatch Alarms, X-Ray Tracing, SNS Alerts
 
-- **Domain Boundaries**: Functions grouped by business domain, not scattered individually
-- **Independent Deployment**: Each service has its own SAM template and CI/CD pipeline
-- **Low Blast Radius**: Changes to one service don't impact others
-- **Team Ownership**: Clear boundaries enable multiple teams to work independently
+**Perfect for:** Portfolio projects, learning AWS serverless, interview preparation, production reference architecture
 
-## Getting Started
+## 🏗️ Architecture
 
-Each service directory contains:
-- Complete AWS SAM infrastructure
-- Independent CI/CD pipeline configuration
-- Unit tests
-- Deployment documentation
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT APPLICATIONS                       │
+└─────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│   Product    │    │     Cart     │    │    Order     │
+│   Service    │◀───│   Service    │◀───│   Service    │
+│              │    │              │    │      │       │
+│ - List       │    │ - Add        │    │ - Create     │
+│ - Get        │    │ - Remove     │    │ - Get        │
+│ - Search     │    │ - Update     │    │ - List       │
+└──────────────┘    └──────────────┘    └──────┬───────┘
+                                               │
+                                               ▼
+                                        ┌──────────────┐
+                                        │   Payment    │
+                                        │   Service    │
+                                        │ - Process    │
+                                        │ - Get        │
+                                        └──────────────┘
 
-Navigate to each service directory for detailed setup instructions.
+┌─────────────────────────────────────────────────────────────┐
+│                      AI AGENTS LAYER                         │
+│                                                              │
+│  ┌────────────────────┐         ┌────────────────────┐     │
+│  │ Shopping Agent     │         │ Troubleshooting    │     │
+│  │ (Bedrock + Strands)│         │ Agent (MCP)        │     │
+│  │                    │         │                    │     │
+│  │ Natural language   │         │ DevOps automation  │     │
+│  │ shopping assistant │         │ using MCP tools    │     │
+│  └────────────────────┘         └────────────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## STAR Format Context
+## ✨ Key Features
 
-**Situation**: Growing serverless platforms often accumulate hundreds of Lambda functions in a single repository, creating deployment bottlenecks and unclear ownership.
+### 🎯 Microservices Architecture
+- **4 Core Services**: Product, Cart, Payment, Order
+- **Independent Deployment**: Each service has its own CI/CD pipeline
+- **Service Isolation**: Separate dev/prod environments
+- **API Gateway**: RESTful APIs with throttling and CORS
 
-**Task**: Reorganize Lambda architecture to enable safe, independent deployments while maintaining serverless benefits.
+### 🤖 AI Integration
+- **Shopping Agent**: Conversational shopping using AWS Bedrock (Claude 3)
+- **Troubleshooting Agent**: AI-powered DevOps assistant
+- **Tool Calling**: Agents interact with microservices via tools
+- **MCP Protocol**: Model Context Protocol for operational AI
 
-**Action**: Implement domain-driven microservices pattern with independent CI/CD pipelines per bounded context.
+### 🏭 Production-Grade Features
+- ✅ Dead Letter Queues (DLQ)
+- ✅ CloudWatch Alarms & Monitoring
+- ✅ X-Ray Distributed Tracing
+- ✅ SNS Email Alerts
+- ✅ API Gateway Throttling
+- ✅ Reserved Concurrency
+- ✅ Cost Alarms
 
-**Result**: Reduced deployment times, eliminated cross-service impact, and established clear architectural framework for scaling.
+### 🛠️ Infrastructure as Code
+- **Terraform**: Complete infrastructure automation
+- **Modular Design**: Reusable Terraform modules
+- **State Management**: S3 backend with DynamoDB locking
+- **Multi-Environment**: Separate dev/prod configurations
+
+### 📊 Observability
+- **Unified MCP Server**: 11 observability tools
+  - CloudWatch Logs (4 tools)
+  - CloudWatch Metrics (3 tools)
+  - AWS Services Inspection (4 tools)
+- **Centralized Logging**: CloudWatch Logs with retention
+- **Metrics & Alarms**: Proactive monitoring
+- **Distributed Tracing**: X-Ray for request flow
+
+## 🔧 Technologies Used
+
+### Cloud & Infrastructure
+- **AWS Lambda** - Serverless compute
+- **AWS API Gateway** - RESTful APIs
+- **AWS DynamoDB** - NoSQL database
+- **AWS Bedrock** - AI/ML models (Claude 3)
+- **AWS CloudWatch** - Monitoring & logging
+- **AWS X-Ray** - Distributed tracing
+- **AWS SNS/SQS** - Notifications & queuing
+- **AWS Secrets Manager** - Secrets management
+- **Terraform** - Infrastructure as Code
+
+### Development
+- **Python 3.11** - Lambda runtime
+- **Strands Agents SDK** - AI agent framework
+- **Model Context Protocol (MCP)** - Operational AI
+- **Boto3** - AWS SDK for Python
+
+### CI/CD
+- **AWS CodePipeline** - Continuous delivery
+- **AWS CodeBuild** - Build automation
+- **GitHub** - Source control
+
+## 🚀 Quick Start
+
+### Prerequisites
+- AWS Account
+- Terraform >= 1.5.0
+- Python 3.11
+- AWS CLI configured
+- GitHub account (for CI/CD)
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/Rishabh1623/aws-serverless-microservices-ai.git
+cd aws-serverless-microservices-ai
+```
+
+### 2. Deploy Shared Infrastructure
+```bash
+cd terraform/shared
+terraform init
+terraform apply
+```
+
+### 3. Deploy Services
+```bash
+# Deploy product service (example)
+cd terraform/product-service/dev
+terraform init
+terraform apply
+
+# Repeat for other services
+```
+
+### 4. Test Deployment
+```bash
+# Get API endpoint
+PRODUCT_API=$(terraform output -raw api_gateway_url)
+
+# Test API
+curl "$PRODUCT_API/products"
+```
+
+**For complete deployment instructions, see [COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md)**
+
+## 📁 Project Structure
+
+```
+.
+├── agent-service/              # AI Shopping Assistant
+├── cart-service/               # Shopping Cart Service
+├── order-service/              # Order Management Service
+├── payment-service/            # Payment Processing Service
+├── product-service/            # Product Catalog Service
+├── troubleshooting-agent-service/  # DevOps AI Agent
+├── mcp-servers/
+│   └── aws-observability/      # Unified MCP Server (11 tools)
+├── terraform/
+│   ├── modules/                # Reusable Terraform modules
+│   ├── shared/                 # Shared infrastructure
+│   ├── agent-service/          # Agent infrastructure
+│   │   ├── dev/
+│   │   ├── prod/
+│   │   └── pipeline/
+│   └── [other services]/       # Similar structure
+├── shared/
+│   └── python/                 # Shared Python utilities
+├── COMPLETE_DEPLOYMENT_GUIDE.md
+├── PRODUCTION_READINESS_AUDIT.md
+└── README.md
+```
+
+## 💰 Cost Estimation
+
+### Demo (3 days)
+- **Optimized**: ~$0.27 (using Claude Haiku)
+- **Full Featured**: ~$1.06 (using Claude Sonnet)
+
+### Monthly (Full Deployment)
+- **Dev Environment**: ~$73/month
+- **Prod Environment**: ~$110/month
+
+**Cost Breakdown:**
+- Lambda: ~$2/month (free tier eligible)
+- DynamoDB: ~$6/month
+- API Gateway: ~$3.50/month
+- Bedrock (AI): ~$20-30/month
+- Other Services: ~$10/month
+
+**See [COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md) for detailed cost analysis**
+
+## 📚 Documentation
+
+- **[COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment
+- **[PRODUCTION_READINESS_AUDIT.md](PRODUCTION_READINESS_AUDIT.md)** - Production checklist
+- **Service READMEs** - Individual service documentation
+  - [Agent Service](agent-service/README.md)
+  - [Cart Service](cart-service/README.md)
+  - [Product Service](product-service/README.md)
+  - [MCP Server](mcp-servers/aws-observability/README.md)
+  - [Troubleshooting Agent](troubleshooting-agent-service/README.md)
+
+## 🎥 Demo
+
+### Shopping Agent Example
+```bash
+curl -X POST "$AGENT_API/agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "I want to buy a laptop under $1000",
+    "userId": "user123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "response": "I found some great laptops for you! The Dell XPS 13 is available for $999...",
+  "toolsUsed": ["search_products", "get_product_details"],
+  "userId": "user123"
+}
+```
+
+### Troubleshooting Agent Example
+```bash
+curl -X POST "$TROUBLESHOOT_API/troubleshoot" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Why is the cart service failing?",
+    "service": "cart-service-dev",
+    "timeRange": "1h"
+  }'
+```
+
+**Response:**
+```json
+{
+  "answer": "I found 3 errors in the cart service logs:\n1. DynamoDB throttling...",
+  "toolsUsed": ["search_errors", "query_logs", "get_dynamodb_table"],
+  "service": "cart-service-dev"
+}
+```
+
+## 🎓 What This Project Demonstrates
+
+### Technical Skills
+- ✅ AWS Serverless Architecture
+- ✅ Microservices Design Patterns
+- ✅ Infrastructure as Code (Terraform)
+- ✅ AI/ML Integration (Bedrock)
+- ✅ CI/CD Automation
+- ✅ Production-Grade Monitoring
+- ✅ Security Best Practices
+- ✅ Cost Optimization
+
+### Architecture Patterns
+- ✅ Domain-Driven Microservices
+- ✅ Event-Driven Architecture
+- ✅ AI Agent Tool Calling
+- ✅ Model Context Protocol (MCP)
+- ✅ Circuit Breaker Pattern
+- ✅ Graceful Degradation
+- ✅ Retry with Exponential Backoff
+
+### Best Practices
+- ✅ Separate dev/prod environments
+- ✅ Independent service deployment
+- ✅ Comprehensive monitoring
+- ✅ Automated testing
+- ✅ Security by design
+- ✅ Cost controls
+- ✅ Complete documentation
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👤 Author
+
+**Rishabh**
+- GitHub: [@Rishabh1623](https://github.com/Rishabh1623)
+- Project: [aws-serverless-microservices-ai](https://github.com/Rishabh1623/aws-serverless-microservices-ai)
+
+## 🙏 Acknowledgments
+
+- AWS for Bedrock and Strands Agents SDK
+- HashiCorp for Terraform
+- Anthropic for Claude AI models
+- Model Context Protocol community
+
+## 📊 Project Stats
+
+- **7 Microservices**
+- **15+ Lambda Functions**
+- **5 DynamoDB Tables**
+- **7 API Gateways**
+- **6 CI/CD Pipelines**
+- **5,000+ Lines of Terraform**
+- **3,000+ Lines of Python**
+- **10,000+ Lines of Documentation**
+
+---
+
+⭐ **Star this repo if you find it helpful!**
+
+📧 **Questions?** Open an issue or reach out!
+
+🚀 **Ready to deploy?** Check out [COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md)
