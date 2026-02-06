@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing Terraform..."
+      - wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+      - unzip terraform_1.6.0_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+      - terraform --version
+
+  pre_build:
+    commands:
+      - echo "Initializing Terraform..."
+      - cd terraform/cart-service/prod
+      - terraform init -backend-config="bucket=terraform-state-${AWS_ACCOUNT_ID}"
+
+  build:
+    commands:
+      - echo "Running Terraform plan..."
+      - terraform plan -out=tfplan
+
+artifacts:
+  files:
+    - terraform/cart-service/prod/tfplan
+  name: terraform-plan-prod

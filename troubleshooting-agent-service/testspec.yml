@@ -1,0 +1,49 @@
+version: 0.2
+
+# CodeBuild testspec for Troubleshooting Agent Service
+# Purpose: Run unit tests
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "Installing test dependencies..."
+      - pip install --upgrade pip
+      - pip install pytest pytest-cov pytest-mock boto3 moto
+      
+  pre_build:
+    commands:
+      - echo "Pre-test phase started on `date`"
+      - echo "Setting up test environment..."
+      
+  build:
+    commands:
+      - echo "Running unit tests..."
+      
+      # Install application dependencies
+      - pip install -r troubleshooting-agent-service/requirements.txt
+      
+      # Run tests with coverage
+      - cd troubleshooting-agent-service
+      - pytest tests/ -v --cov=src --cov-report=term --cov-report=html
+      
+  post_build:
+    commands:
+      - echo "Tests completed on `date`"
+      - echo "Test coverage report generated in htmlcov/"
+
+reports:
+  pytest_reports:
+    files:
+      - 'troubleshooting-agent-service/test-results.xml'
+    file-format: 'JUNITXML'
+
+artifacts:
+  files:
+    - troubleshooting-agent-service/htmlcov/**/*
+  name: test-coverage-$(date +%Y%m%d-%H%M%S)
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'

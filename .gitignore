@@ -1,0 +1,273 @@
+# ============================================================================
+# TERRAFORM FILES - CRITICAL: Never commit state files!
+# ============================================================================
+# Why: State files contain sensitive data (passwords, IPs, resource IDs)
+# What: Terraform working directories and state files
+
+# Terraform state files (contain sensitive data)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform working directory
+.terraform/
+.terraform.lock.hcl
+
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+terraform.tfvars
+terraform.tfvars.json
+
+# Terraform plan files (may contain sensitive data)
+*.tfplan
+*.tfplan.*
+
+# Terraform crash log files
+crash.log
+crash.*.log
+
+# Terraform override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform CLI configuration files
+.terraformrc
+terraform.rc
+
+# ============================================================================
+# PYTHON FILES
+# ============================================================================
+# Why: Python bytecode and virtual environments shouldn't be in Git
+# What: Python-specific temporary and build files
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Python build artifacts
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+nosetests.xml
+test-results.xml
+
+# ============================================================================
+# AWS FILES
+# ============================================================================
+# Why: AWS credentials and deployment artifacts shouldn't be in Git
+# What: AWS-specific files and build artifacts
+
+# AWS SAM (if used)
+.aws-sam/
+packaged.yaml
+samconfig.toml.bak
+
+# AWS credentials (CRITICAL - never commit!)
+.aws/
+aws-credentials.json
+credentials.json
+
+# Lambda deployment packages
+*.zip
+lambda_packages/
+deployment_packages/
+
+# CloudFormation templates (generated)
+packaged-template.yaml
+packaged-template.json
+
+# ============================================================================
+# IDE & EDITOR FILES
+# ============================================================================
+# Why: IDE settings are personal and shouldn't be shared
+# What: Editor-specific configuration files
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+# Why: OS-specific files aren't needed in repository
+# What: System-generated files
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================================================
+# ENVIRONMENT & SECRETS
+# ============================================================================
+# Why: Environment variables and secrets must never be committed
+# What: Files containing sensitive configuration
+
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Secrets files
+secrets.json
+secrets.yaml
+secrets.yml
+*.secret
+*.secrets
+
+# API keys and tokens
+.api-keys
+api-keys.json
+tokens.json
+
+# ============================================================================
+# BUILD & DEPLOYMENT ARTIFACTS
+# ============================================================================
+# Why: Build artifacts should be generated, not committed
+# What: Compiled and packaged files
+
+# Node modules (if using Node.js tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+outputs/
+output.txt
+outputs.txt
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ============================================================================
+# PROJECT-SPECIFIC FILES
+# ============================================================================
+# Why: Local development files and outputs
+# What: Project-specific temporary files
+
+# Local development outputs
+*_api_dev.txt
+*_api_prod.txt
+test_e2e.sh.log
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Archive files
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# ============================================================================
+# DOCUMENTATION ARTIFACTS
+# ============================================================================
+# Why: Generated documentation shouldn't be in Git
+# What: Auto-generated docs
+
+# Generated documentation
+docs/_build/
+site/
+
+# ============================================================================
+# SECURITY & COMPLIANCE
+# ============================================================================
+# Why: Security scan results and compliance reports are sensitive
+# What: Security-related output files
+
+# Security scan results
+security-scan-results.json
+vulnerability-report.json
+
+# Compliance reports
+compliance-report.pdf
+audit-log.json

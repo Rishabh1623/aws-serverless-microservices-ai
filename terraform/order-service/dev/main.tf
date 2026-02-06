@@ -1,0 +1,168 @@
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  
+  backend "s3" {
+    bucket         = "terraform-state-ACCOUNT_ID"
+    key            = "order-service/dev/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-state-lock"
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+  
+  default_tags {
+    tags = {
+      Project     = "serverless-microservices"
+      Service     = "order-service"
+      Environment = "dev"
+      ManagedBy   = "terraform"
+    }
+  }
+}
+
+# Data sources for Lambda packages
+data "archive_file" "create_order" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../order-service/src/create_order"
+  output_path = "${path.module}/lambda_packages/create_order.zip"
+}
+
+data "archive_file" "get_order" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../order-service/src/get_order"
+  output_path = "${path.module}/lambda_packages/get_order.zip"
+}
+
+data "archive_file" "list_user_orders" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../order-service/src/list_user_orders"
+  output_path = "${path.module}/lambda_packages/list_user_orders.zip"
+}
+
+# Get service endpoints from SSM
+data "aws_ssm_parameter" "cart_api_endpoint" {
+  name = "/cart-service/dev/api-endpoint"
+}
+
+data "aws_ssm_parameter" "product_api_endpoint" {
+  name = "/product-service/dev/api-endpoint"
+}
+
+data "aws_ssm_parameter" "payment_api_endpoint" {
+  name = "/payment-service/dev/api-endpoint"
+}
+
+# Order Service Module
+module "order_service" {
+  source = "../../modules/lambda-service"
+  
+  service_name = "order-service"
+  environment  = "dev"
+  
+  lambda_functions = {
+    create-order = {
+      filename                = data.archive_file.create_order.output_path
+      handler                 = "app.lambda_handler"
+      runtime                 = "python3.11"
+      memory_size             = 512
+      timeout                 = 60  # Longer timeout for service calls
+      environment_variables   = {
+        ORDER_TABLE           = "order-service-order_table-dev"
+        CART_SERVICE_URL      = data.aws_ssm_parameter.cart_api_endpoint.value
+        PRODUCT_SERVICE_URL   = data.aws_ssm_parameter.product_api_endpoint.value
+        PAYMENT_SERVICE_URL   = data.aws_ssm_parameter.payment_api_endpoint.value
+      }
+    }
+    get-order = {
+      filename                = data.archive_file.get_order.output_path
+      handler                 = "app.lambda_handler"
+      runtime                 = "python3.11"
+      memory_size             = 512
+      timeout                 = 30
+      environment_variables   = {
+        ORDER_TABLE = "order-service-order_table-dev"
+      }
+    }
+    list-user-orders = {
+      filename                = data.archive_file.list_user_orders.output_path
+      handler                 = "app.lambda_handler"
+      runtime                 = "python3.11"
+      memory_size             = 512
+      timeout                 = 30
+      environment_variables   = {
+        ORDER_TABLE = "order-service-order_table-dev"
+      }
+    }
+  }
+  
+  api_gateway_resources = {
+    orders = {
+      path_part = "orders"
+    }
+    order_id = {
+      path_part = "{orderId}"
+    }
+    user = {
+      path_part = "user"
+    }
+    user_id = {
+      path_part = "{userId}"
+    }
+  }
+  
+  api_gateway_methods = {
+    create_order = {
+      resource_key = "orders"
+      http_method  = "POST"
+      lambda_key   = "create-order"
+    }
+    get_order = {
+      resource_key = "order_id"
+      http_method  = "GET"
+      lambda_key   = "get-order"
+    }
+    list_user_orders = {
+      resource_key = "user_id"
+      http_method  = "GET"
+      lambda_key   = "list-user-orders"
+    }
+  }
+  
+  dynamodb_tables = {
+    order_table = {
+      hash_key  = "orderId"
+      attributes = [
+        {
+          name = "orderId"
+          type = "S"
+        },
+        {
+          name = "userId"
+          type = "S"
+        },
+        {
+          name = "createdAt"
+          type = "S"
+        }
+      ]
+      global_secondary_indexes = [
+        {
+          name            = "UserIdIndex"
+          hash_key        = "userId"
+          range_key       = "createdAt"
+          projection_type = "ALL"
+        }
+      ]
+    }
+  }
+}

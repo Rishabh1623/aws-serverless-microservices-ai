@@ -1,0 +1,52 @@
+version: 0.2
+
+# CodeBuild buildspec for Agent Service
+# Purpose: Package Lambda function with dependencies
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      
+  pre_build:
+    commands:
+      - echo "Pre-build phase started on `date`"
+      - echo "Creating deployment package..."
+      
+  build:
+    commands:
+      - echo "Build phase started on `date`"
+      
+      # Create deployment directory
+      - mkdir -p deployment
+      
+      # Install dependencies to deployment directory
+      - pip install -r agent-service/requirements.txt -t deployment/
+      
+      # Copy Lambda handler code
+      - cp -r agent-service/src/agent_handler/* deployment/
+      
+      # Create deployment package
+      - cd deployment
+      - zip -r ../agent-service-lambda.zip .
+      - cd ..
+      
+      - echo "Deployment package created: agent-service-lambda.zip"
+      - ls -lh agent-service-lambda.zip
+      
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+
+artifacts:
+  files:
+    - agent-service-lambda.zip
+    - terraform/agent-service/**/*
+  name: agent-service-build-$(date +%Y%m%d-%H%M%S)
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'

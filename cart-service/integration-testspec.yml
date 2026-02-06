@@ -1,0 +1,54 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "Installing test dependencies..."
+      - pip install requests pytest boto3
+
+  pre_build:
+    commands:
+      - echo "Fetching API endpoint from SSM Parameter Store..."
+      - export API_ENDPOINT=$(aws ssm get-parameter --name /cart-service/dev/api-endpoint --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+      - |
+        if [ -z "$API_ENDPOINT" ]; then
+          echo "API endpoint not found in SSM, fetching from CloudFormation..."
+          export API_ENDPOINT=$(aws cloudformation describe-stacks \
+            --stack-name cart-service-dev \
+            --query 'Stacks[0].Outputs[?OutputKey==`CartApiUrl`].OutputValue' \
+            --output text)
+        fi
+      - echo "API Endpoint: $API_ENDPOINT"
+      - |
+        if [ -z "$API_ENDPOINT" ]; then
+          echo "ERROR: Could not determine API endpoint"
+          exit 1
+        fi
+
+  build:
+    commands:
+      - echo "Running integration tests against dev environment..."
+      - python -m pytest integration-tests/ -v --junitxml=integration-test-results.xml
+
+  post_build:
+    commands:
+      - |
+        if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
+          echo "Integration tests passed successfully"
+        else
+          echo "Integration tests failed"
+          exit 1
+        fi
+
+reports:
+  integration-test-results:
+    files:
+      - integration-test-results.xml
+    file-format: JUNITXML
+
+artifacts:
+  files:
+    - integration-test-results.xml
+  name: integration-test-results

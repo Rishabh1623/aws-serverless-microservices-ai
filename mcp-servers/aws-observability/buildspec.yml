@@ -1,0 +1,52 @@
+version: 0.2
+
+# AWS Observability MCP Server Build Specification
+# Builds and packages the unified MCP server for Lambda deployment
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      
+  pre_build:
+    commands:
+      - echo "Running pre-build checks..."
+      - python --version
+      - pip --version
+      
+  build:
+    commands:
+      - echo "Building MCP server package..."
+      - cd mcp-servers/aws-observability
+      
+      # Install dependencies to package directory
+      - pip install -r requirements.txt -t package/
+      
+      # Copy source code
+      - cp server.py package/
+      
+      # Create deployment package
+      - cd package
+      - zip -r ../aws-observability-mcp.zip .
+      - cd ..
+      
+      - echo "Build completed successfully"
+      
+  post_build:
+    commands:
+      - echo "Post-build phase..."
+      - ls -lh aws-observability-mcp.zip
+      - echo "Package size:"
+      - du -h aws-observability-mcp.zip
+
+artifacts:
+  files:
+    - mcp-servers/aws-observability/aws-observability-mcp.zip
+  name: aws-observability-mcp-$(date +%Y%m%d-%H%M%S)
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'

@@ -1,0 +1,9 @@
+# MCP (Model Context Protocol) SDK
+mcp>=0.1.0
+
+# AWS SDK
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Async support
+asyncio>=3.4.3
