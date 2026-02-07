@@ -271,3 +271,35 @@ vulnerability-report.json
 # Compliance reports
 compliance-report.pdf
 audit-log.json
+
+# ============================================================================
+# FRONTEND (React + Vite)
+# ============================================================================
+# Why: Frontend build artifacts and dependencies shouldn't be in Git
+# What: Node.js and React build files
+
+# Dependencies
+frontend/node_modules/
+frontend/package-lock.json
+frontend/yarn.lock
+
+# Build output
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.development
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Editor directories
+frontend/.vscode/
+frontend/.idea/

@@ -136,46 +136,37 @@ This project demonstrates a **production-grade serverless microservices architec
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- AWS Account
-- Terraform >= 1.5.0
-- Python 3.11
-- AWS CLI configured
-- GitHub account (for CI/CD)
+### Option 1: Run Frontend Demo (No AWS Required!)
 
-### 1. Clone Repository
+Perfect for recording demos and showcasing the UI:
+
 ```bash
-git clone https://github.com/Rishabh1623/aws-serverless-microservices-ai.git
-cd aws-serverless-microservices-ai
+cd frontend
+npm install
+npm run dev
 ```
 
-### 2. Deploy Shared Infrastructure
-```bash
-cd terraform/shared
-terraform init
-terraform apply
-```
+**Open http://localhost:5173** - Full UI with demo data!
 
-### 3. Deploy Services
-```bash
-# Deploy product service (example)
-cd terraform/product-service/dev
-terraform init
-terraform apply
+See [FRONTEND_SETUP.md](FRONTEND_SETUP.md) for details.
 
-# Repeat for other services
-```
+### Option 2: Deploy Full Stack to AWS
 
-### 4. Test Deployment
-```bash
-# Get API endpoint
-PRODUCT_API=$(terraform output -raw api_gateway_url)
+**Follow ONE complete guide:**
 
-# Test API
-curl "$PRODUCT_API/products"
-```
+📖 **[STEP_BY_STEP_COMPLETE_GUIDE.md](STEP_BY_STEP_COMPLETE_GUIDE.md)**
 
-**For complete deployment instructions, see [COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md)**
+This single file contains:
+- EC2 setup
+- Tool installation
+- AWS configuration
+- All 7 microservices deployment
+- Frontend setup
+- Demo recording
+- Troubleshooting
+
+**Time:** 8-10 hours  
+**Cost:** $1-5 for 3-day demo
 
 ## 📁 Project Structure
 
@@ -225,14 +216,15 @@ curl "$PRODUCT_API/products"
 
 ## 📚 Documentation
 
-- **[COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment
-- **[PRODUCTION_READINESS_AUDIT.md](PRODUCTION_READINESS_AUDIT.md)** - Production checklist
-- **Service READMEs** - Individual service documentation
-  - [Agent Service](agent-service/README.md)
-  - [Cart Service](cart-service/README.md)
-  - [Product Service](product-service/README.md)
-  - [MCP Server](mcp-servers/aws-observability/README.md)
-  - [Troubleshooting Agent](troubleshooting-agent-service/README.md)
+**Main Guide (Everything in ONE file):**
+- **[STEP_BY_STEP_COMPLETE_GUIDE.md](STEP_BY_STEP_COMPLETE_GUIDE.md)** - Complete deployment from start to finish
+
+**Service Documentation:**
+- [Agent Service](agent-service/README.md) - AI Shopping Assistant
+- [Cart Service](cart-service/README.md) - Shopping Cart API
+- [Product Service](product-service/README.md) - Product Catalog API
+- [MCP Server](mcp-servers/aws-observability/README.md) - Observability tools
+- [Troubleshooting Agent](troubleshooting-agent-service/README.md) - DevOps AI
 
 ## 🎥 Demo
 
