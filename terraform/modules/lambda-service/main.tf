@@ -190,6 +190,25 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
   })
 }
 
+# Lambda EventBridge Policy
+resource "aws_iam_role_policy" "lambda_eventbridge" {
+  name = "${var.service_name}-lambda-eventbridge-${var.environment}"
+  role = aws_iam_role.lambda_role.id
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "events:PutEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # API Gateway Lambda Permissions
 resource "aws_lambda_permission" "api_gateway" {
   for_each = var.lambda_functions
