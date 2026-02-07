@@ -200,8 +200,6 @@ resource "aws_lambda_permission" "api_gateway" {
   principal     = "apigateway.amazonaws.com"
   
   source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
-  
-  qualifier = aws_lambda_alias.live[each.key].name
 }
 
 # API Gateway Resources and Integrations
