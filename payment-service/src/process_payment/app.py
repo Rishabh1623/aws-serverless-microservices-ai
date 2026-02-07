@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from datetime import datetime
+from decimal import Decimal
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
@@ -37,7 +38,7 @@ def lambda_handler(event, context):
         body = json.loads(event['body'])
         order_id = body['orderId']
         user_id = body['userId']
-        amount = body['amount']
+        amount = Decimal(str(body['amount']))  # Convert to Decimal for DynamoDB
         currency = body.get('currency', 'USD')
         payment_method = body.get('paymentMethod', 'CARD')
         
@@ -48,7 +49,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'orderId, userId, and amount are required'})
             }
         
-        if amount <= 0:
+        if amount <= Decimal('0'):  # Compare Decimal with Decimal
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'amount must be greater than 0'})
