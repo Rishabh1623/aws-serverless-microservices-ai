@@ -95,7 +95,7 @@ def lambda_handler(event, context):
         table.put_item(Item=payment)
         
         # Process payment with gateway
-        gateway_response = process_with_payment_gateway(amount, currency, payment_method)
+        gateway_response = process_with_payment_gateway(float(amount), currency, payment_method)
         
         if gateway_response['success']:
             # Update payment status
@@ -119,7 +119,7 @@ def lambda_handler(event, context):
                         'Detail': json.dumps({
                             'paymentId': payment_id,
                             'orderId': order_id,
-                            'amount': amount,
+                            'amount': float(amount),  # Convert Decimal to float for JSON
                             'status': 'CAPTURED'
                         })
                     }
