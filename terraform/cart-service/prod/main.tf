@@ -9,7 +9,7 @@ terraform {
   }
   
   backend "s3" {
-    bucket         = "terraform-state-ACCOUNT_ID"  # Replace with your account ID
+    bucket         = "terraform-state-543927035352"  # Replace with your account ID
     key            = "cart-service/prod/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true

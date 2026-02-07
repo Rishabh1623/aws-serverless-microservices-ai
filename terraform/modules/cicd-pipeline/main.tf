@@ -9,7 +9,7 @@ terraform {
 
 # S3 Bucket for Artifacts
 resource "aws_s3_bucket" "artifacts" {
-  bucket = "${var.service_name}-artifacts-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
+  bucket = "${var.service_name}-artifacts-${data.aws_caller_identity.current.543927035352}-${var.aws_region}"
 }
 
 resource "aws_s3_bucket_versioning" "artifacts" {
@@ -54,7 +54,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
 
 # S3 Bucket for Build Cache
 resource "aws_s3_bucket" "build_cache" {
-  bucket = "${var.service_name}-build-cache-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
+  bucket = "${var.service_name}-build-cache-${data.aws_caller_identity.current.543927035352}-${var.aws_region}"
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "build_cache" {
@@ -119,8 +119,8 @@ resource "aws_codebuild_project" "build" {
     }
     
     environment_variable {
-      name  = "AWS_ACCOUNT_ID"
-      value = data.aws_caller_identity.current.account_id
+      name  = "AWS_543927035352"
+      value = data.aws_caller_identity.current.543927035352
     }
   }
   

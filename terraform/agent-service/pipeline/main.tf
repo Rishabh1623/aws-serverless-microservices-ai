@@ -9,7 +9,7 @@ terraform {
   }
   
   backend "s3" {
-    bucket         = "terraform-state-ACCOUNT_ID"
+    bucket         = "terraform-state-543927035352"
     key            = "agent-service/pipeline/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-lock"

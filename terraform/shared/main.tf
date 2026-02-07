@@ -87,7 +87,7 @@ output "terraform_state_lock_table" {
   value       = aws_dynamodb_table.terraform_state_lock.id
 }
 
-output "aws_account_id" {
+output "aws_543927035352" {
   description = "AWS Account ID"
-  value       = data.aws_caller_identity.current.account_id
+  value       = data.aws_caller_identity.current.543927035352
 }

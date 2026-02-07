@@ -129,7 +129,7 @@ resource "aws_cognito_user_pool_client" "main" {
 
 # Cognito User Pool Domain
 resource "aws_cognito_user_pool_domain" "main" {
-  domain       = "${var.service_name}-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  domain       = "${var.service_name}-${var.environment}-${data.aws_caller_identity.current.543927035352}"
   user_pool_id = aws_cognito_user_pool.main.id
 }
 
