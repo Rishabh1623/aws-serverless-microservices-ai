@@ -320,6 +320,67 @@ Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 
 ---
 
+## STEP 7.5: Setup API Gateway CloudWatch Logs (ONE-TIME)
+
+**This is a ONE-TIME AWS account configuration. Required for API Gateway logging.**
+
+### Create IAM Role for API Gateway:
+
+```bash
+cd ~/aws-serverless-microservices-ai
+
+# Create trust policy
+cat > /tmp/trust-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+# Create the role
+aws iam create-role \
+  --role-name APIGatewayCloudWatchLogsRole \
+  --assume-role-policy-document file:///tmp/trust-policy.json \
+  --description "Allows API Gateway to push logs to CloudWatch Logs"
+
+# Attach the managed policy
+aws iam attach-role-policy \
+  --role-name APIGatewayCloudWatchLogsRole \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+# Get the role ARN
+ROLE_ARN=$(aws iam get-role --role-name APIGatewayCloudWatchLogsRole --query 'Role.Arn' --output text)
+echo "Role ARN: $ROLE_ARN"
+
+# Set the CloudWatch role ARN in API Gateway account settings
+aws apigateway update-account \
+  --patch-operations op=replace,path=/cloudwatchRoleArn,value=$ROLE_ARN
+```
+
+### Verify Setup:
+
+```bash
+aws apigateway get-account --query 'cloudwatchRoleArn'
+```
+
+**Expected output:**
+```
+"arn:aws:iam::543927035352:role/APIGatewayCloudWatchLogsRole"
+```
+
+**✅ Checkpoint:** API Gateway can now write to CloudWatch Logs
+
+---
+
 ## STEP 8: Deploy Product Service
 
 ### Deploy Dev Environment:
