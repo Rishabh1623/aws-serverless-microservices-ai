@@ -54,10 +54,6 @@ data "aws_ssm_parameter" "cart_api_endpoint" {
   name = "/cart-service/dev/api-endpoint"
 }
 
-data "aws_ssm_parameter" "product_api_endpoint" {
-  name = "/product-service/dev/api-endpoint"
-}
-
 data "aws_ssm_parameter" "payment_api_endpoint" {
   name = "/payment-service/dev/api-endpoint"
 }
@@ -79,7 +75,6 @@ module "order_service" {
       environment_variables   = {
         ORDER_TABLE           = "order-service-order_table-dev"
         CART_SERVICE_URL      = data.aws_ssm_parameter.cart_api_endpoint.value
-        PRODUCT_SERVICE_URL   = data.aws_ssm_parameter.product_api_endpoint.value
         PAYMENT_SERVICE_URL   = data.aws_ssm_parameter.payment_api_endpoint.value
       }
     }
