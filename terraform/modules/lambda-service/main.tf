@@ -252,7 +252,7 @@ resource "aws_dynamodb_table" "tables" {
   }
   
   dynamic "global_secondary_index" {
-    for_each = try(each.value.global_secondary_indexes, [])
+    for_each = try(each.value.global_secondary_indexes, null) != null ? each.value.global_secondary_indexes : []
     content {
       name            = global_secondary_index.value.name
       hash_key        = global_secondary_index.value.hash_key
