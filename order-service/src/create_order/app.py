@@ -31,7 +31,7 @@ def lambda_handler(event, context):
             }
         
         # 1. Get cart items
-        cart_response = requests.get(f"{CART_SERVICE_URL}/cart/{user_id}", timeout=10)
+        cart_response = requests.get(f"{CART_SERVICE_URL}/{user_id}", timeout=10)
         if cart_response.status_code != 200:
             return {
                 'statusCode': 400,
