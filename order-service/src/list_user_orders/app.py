@@ -1,6 +1,7 @@
 import json
 import os
 import boto3
+from boto3.dynamodb.conditions import Attr
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['ORDER_TABLE'])
@@ -19,8 +20,7 @@ def lambda_handler(event, context):
         # Query orders by userId (range key)
         # Since userId is the range key, we need to scan with filter
         response = table.scan(
-            FilterExpression='userId = :userId',
-            ExpressionAttributeValues={':userId': user_id}
+            FilterExpression=Attr('userId').eq(user_id)
         )
         
         orders = response.get('Items', [])

@@ -1,6 +1,7 @@
 import json
 import os
 import boto3
+from boto3.dynamodb.conditions import Attr
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['ORDER_TABLE'])
@@ -19,8 +20,7 @@ def lambda_handler(event, context):
         # Since we have a composite key (orderId + userId), we need to scan
         # In production, consider adding orderId as a GSI for efficient lookups
         response = table.scan(
-            FilterExpression='orderId = :orderId',
-            ExpressionAttributeValues={':orderId': order_id}
+            FilterExpression=Attr('orderId').eq(order_id)
         )
         
         items = response.get('Items', [])
