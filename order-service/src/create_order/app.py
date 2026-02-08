@@ -63,9 +63,9 @@ def lambda_handler(event, context):
             
             order_items.append({
                 'productId': product_id,
-                'productName': product['name'],
+                'productName': f'Product {product_id}',  # Mock name for demo
                 'quantity': quantity,
-                'price': product['price']
+                'price': float(mock_price)
             })
         
         # 3. Create order record
