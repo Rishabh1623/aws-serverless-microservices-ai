@@ -16,10 +16,16 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'orderId is required'})
             }
         
-        # Get order from DynamoDB
-        response = table.get_item(Key={'orderId': order_id})
+        # Since we have a composite key (orderId + userId), we need to scan
+        # In production, consider adding orderId as a GSI for efficient lookups
+        response = table.scan(
+            FilterExpression='orderId = :orderId',
+            ExpressionAttributeValues={':orderId': order_id}
+        )
         
-        if 'Item' not in response:
+        items = response.get('Items', [])
+        
+        if not items:
             return {
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Order not found'})
@@ -32,7 +38,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'order': response['Item']
+                'order': items[0]
             }, default=str)
         }
         

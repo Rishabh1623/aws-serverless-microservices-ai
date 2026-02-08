@@ -84,7 +84,9 @@ def lambda_handler(event, context):
             'updatedAt': timestamp
         }
         
-        table.put_item(Item=order)
+        # Convert float values to Decimal for DynamoDB
+        order_for_db = json.loads(json.dumps(order), parse_float=Decimal)
+        table.put_item(Item=order_for_db)
         
         # 4. Process payment
         payment_payload = {
@@ -104,7 +106,7 @@ def lambda_handler(event, context):
         if payment_response.status_code != 200:
             # Payment failed - update order status
             table.update_item(
-                Key={'orderId': order_id},
+                Key={'orderId': order_id, 'userId': user_id},
                 UpdateExpression='SET #status = :status, updatedAt = :timestamp',
                 ExpressionAttributeNames={'#status': 'status'},
                 ExpressionAttributeValues={
@@ -123,7 +125,7 @@ def lambda_handler(event, context):
         
         # 5. Update order with payment info
         table.update_item(
-            Key={'orderId': order_id},
+            Key={'orderId': order_id, 'userId': user_id},
             UpdateExpression='SET #status = :status, paymentId = :paymentId, updatedAt = :timestamp',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={

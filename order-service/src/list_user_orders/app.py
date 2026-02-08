@@ -1,7 +1,6 @@
 import json
 import os
 import boto3
-from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['ORDER_TABLE'])
@@ -17,14 +16,17 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'userId is required'})
             }
         
-        # Query orders by userId using GSI
-        response = table.query(
-            IndexName='UserIdIndex',
-            KeyConditionExpression=Key('userId').eq(user_id),
-            ScanIndexForward=False  # Sort by createdAt descending
+        # Query orders by userId (range key)
+        # Since userId is the range key, we need to scan with filter
+        response = table.scan(
+            FilterExpression='userId = :userId',
+            ExpressionAttributeValues={':userId': user_id}
         )
         
         orders = response.get('Items', [])
+        
+        # Sort by createdAt descending
+        orders.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
         
         return {
             'statusCode': 200,
