@@ -136,6 +136,7 @@ module "order_service" {
   dynamodb_tables = {
     order_table = {
       hash_key  = "orderId"
+      range_key = "userId"
       attributes = [
         {
           name = "orderId"
@@ -144,18 +145,6 @@ module "order_service" {
         {
           name = "userId"
           type = "S"
-        },
-        {
-          name = "createdAt"
-          type = "S"
-        }
-      ]
-      global_secondary_indexes = [
-        {
-          name            = "UserIdIndex"
-          hash_key        = "userId"
-          range_key       = "createdAt"
-          projection_type = "ALL"
         }
       ]
     }
