@@ -231,9 +231,9 @@ resource "aws_api_gateway_resource" "root_resources" {
   path_part   = each.value.path_part
 }
 
-# API Gateway Resources - Stage 2: Nested resources
-resource "aws_api_gateway_resource" "nested_resources" {
-  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) != null }
+# API Gateway Resources - Stage 2: Level 2 nested resources (parent is root-level)
+resource "aws_api_gateway_resource" "level2_resources" {
+  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) != null && contains(keys({ for k2, v2 in var.api_gateway_resources : k2 => v2 if lookup(v2, "parent_key", null) == null }), v.parent_key) }
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.root_resources[each.value.parent_key].id
@@ -242,11 +242,23 @@ resource "aws_api_gateway_resource" "nested_resources" {
   depends_on = [aws_api_gateway_resource.root_resources]
 }
 
-# Merge both resource maps for use in methods
+# API Gateway Resources - Stage 3: Level 3 nested resources (parent is level 2)
+resource "aws_api_gateway_resource" "level3_resources" {
+  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) != null && contains(keys({ for k2, v2 in var.api_gateway_resources : k2 => v2 if lookup(v2, "parent_key", null) != null }), v.parent_key) }
+  
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.level2_resources[each.value.parent_key].id
+  path_part   = each.value.path_part
+  
+  depends_on = [aws_api_gateway_resource.level2_resources]
+}
+
+# Merge all resource maps for use in methods
 locals {
   all_resources = merge(
     aws_api_gateway_resource.root_resources,
-    aws_api_gateway_resource.nested_resources
+    aws_api_gateway_resource.level2_resources,
+    aws_api_gateway_resource.level3_resources
   )
 }
 
