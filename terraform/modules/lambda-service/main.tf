@@ -222,19 +222,39 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 # API Gateway Resources and Integrations
-resource "aws_api_gateway_resource" "resources" {
-  for_each = var.api_gateway_resources
+# API Gateway Resources - Stage 1: Root level resources
+resource "aws_api_gateway_resource" "root_resources" {
+  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) == null }
   
   rest_api_id = aws_api_gateway_rest_api.this.id
-  parent_id   = lookup(each.value, "parent_key", null) != null ? aws_api_gateway_resource.resources[each.value.parent_key].id : aws_api_gateway_rest_api.this.root_resource_id
+  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
   path_part   = each.value.path_part
+}
+
+# API Gateway Resources - Stage 2: Nested resources
+resource "aws_api_gateway_resource" "nested_resources" {
+  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) != null }
+  
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.root_resources[each.value.parent_key].id
+  path_part   = each.value.path_part
+  
+  depends_on = [aws_api_gateway_resource.root_resources]
+}
+
+# Merge both resource maps for use in methods
+locals {
+  all_resources = merge(
+    aws_api_gateway_resource.root_resources,
+    aws_api_gateway_resource.nested_resources
+  )
 }
 
 resource "aws_api_gateway_method" "methods" {
   for_each = var.api_gateway_methods
   
   rest_api_id   = aws_api_gateway_rest_api.this.id
-  resource_id   = aws_api_gateway_resource.resources[each.value.resource_key].id
+  resource_id   = local.all_resources[each.value.resource_key].id
   http_method   = each.value.http_method
   authorization = "NONE"
 }
@@ -243,7 +263,7 @@ resource "aws_api_gateway_integration" "lambda_integrations" {
   for_each = var.api_gateway_methods
   
   rest_api_id = aws_api_gateway_rest_api.this.id
-  resource_id = aws_api_gateway_resource.resources[each.value.resource_key].id
+  resource_id = local.all_resources[each.value.resource_key].id
   http_method = aws_api_gateway_method.methods[each.key].http_method
   
   integration_http_method = "POST"
