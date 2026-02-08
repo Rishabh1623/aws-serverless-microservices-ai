@@ -104,21 +104,6 @@ module "order_service" {
     orders = {
       path_part = "orders"
     }
-    order_id = {
-      path_part = "{orderId}"
-      parent_key = "orders"
-    }
-    users = {
-      path_part = "users"
-    }
-    user_id = {
-      path_part = "{userId}"
-      parent_key = "users"
-    }
-    user_id_orders = {
-      path_part = "orders"
-      parent_key = "user_id"
-    }
   }
   
   api_gateway_methods = {
@@ -126,16 +111,6 @@ module "order_service" {
       resource_key = "orders"
       http_method  = "POST"
       lambda_key   = "create-order"
-    }
-    get_order = {
-      resource_key = "order_id"
-      http_method  = "GET"
-      lambda_key   = "get-order"
-    }
-    list_user_orders = {
-      resource_key = "user_id_orders"
-      http_method  = "GET"
-      lambda_key   = "list-user-orders"
     }
   }
   
