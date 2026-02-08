@@ -152,8 +152,8 @@ def lambda_handler(event, context):
             }
         )
         
-        # 6. Clear cart
-        requests.delete(f"{CART_SERVICE_URL}/cart/{user_id}", timeout=10)
+        # 6. Clear cart (TODO: implement proper cart clearing)
+        # For now, items remain in cart after order
         
         # 7. Publish OrderCreated event
         eventbridge.put_events(
