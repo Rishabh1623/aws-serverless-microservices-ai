@@ -226,7 +226,7 @@ resource "aws_api_gateway_resource" "resources" {
   for_each = var.api_gateway_resources
   
   rest_api_id = aws_api_gateway_rest_api.this.id
-  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
+  parent_id   = lookup(each.value, "parent_key", null) != null ? aws_api_gateway_resource.resources[each.value.parent_key].id : aws_api_gateway_rest_api.this.root_resource_id
   path_part   = each.value.path_part
 }
 
@@ -273,7 +273,7 @@ resource "aws_dynamodb_table" "tables" {
     content {
       name            = global_secondary_index.value.name
       hash_key        = global_secondary_index.value.hash_key
-      range_key       = try(global_secondary_index.value.range_key, null)
+      range_key       = lookup(global_secondary_index.value, "range_key", null)
       projection_type = global_secondary_index.value.projection_type
     }
   }

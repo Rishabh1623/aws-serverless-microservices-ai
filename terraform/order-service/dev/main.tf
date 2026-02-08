@@ -106,12 +106,18 @@ module "order_service" {
     }
     order_id = {
       path_part = "{orderId}"
+      parent_key = "orders"
     }
-    user = {
-      path_part = "user"
+    users = {
+      path_part = "users"
     }
     user_id = {
       path_part = "{userId}"
+      parent_key = "users"
+    }
+    user_orders = {
+      path_part = "orders"
+      parent_key = "user_id"
     }
   }
   
@@ -127,7 +133,7 @@ module "order_service" {
       lambda_key   = "get-order"
     }
     list_user_orders = {
-      resource_key = "user_id"
+      resource_key = "user_orders"
       http_method  = "GET"
       lambda_key   = "list-user-orders"
     }
