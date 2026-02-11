@@ -157,18 +157,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Get agent instance
         agent = get_agent()
         
-        # Process message through agent
-        # Pass user context for personalization
-        response = agent.process(
-            user_message,
-            context={
-                'userId': user_id,
-                'sessionId': session_id
-            }
-        )
+        # Process message through agent (call agent directly)
+        response = agent(user_message)
         
         # Log tools used (for monitoring)
-        logger.info(f"Tools used: {response.tools_used}")
+        if hasattr(response, 'tools_used'):
+            logger.info(f"Tools used: {response.tools_used}")
         
         # Return response
         return {
@@ -178,8 +172,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'response': response.text,
-                'toolsUsed': response.tools_used,
+                'response': response.text if hasattr(response, 'text') else str(response),
+                'toolsUsed': response.tools_used if hasattr(response, 'tools_used') else [],
                 'userId': user_id,
                 'sessionId': session_id
             })
