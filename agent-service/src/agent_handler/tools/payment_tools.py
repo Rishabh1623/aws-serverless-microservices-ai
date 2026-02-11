@@ -7,7 +7,7 @@ Tools that call the Payment Service API to check payment status.
 import requests
 import logging
 from typing import Dict, Any
-from strands_agents import tool
+from strands import tool
 
 logger = logging.getLogger()
 

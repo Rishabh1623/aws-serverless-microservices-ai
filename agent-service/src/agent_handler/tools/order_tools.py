@@ -7,7 +7,7 @@ Tools that call the Order Service API to create and track orders.
 import requests
 import logging
 from typing import Dict, Any, Optional
-from strands_agents import tool
+from strands import tool
 
 logger = logging.getLogger()
 

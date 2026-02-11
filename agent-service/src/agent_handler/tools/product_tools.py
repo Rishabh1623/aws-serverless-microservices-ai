@@ -7,7 +7,7 @@ Tools that call the Product Service API to search and retrieve product informati
 import requests
 import logging
 from typing import Optional, List, Dict, Any
-from strands_agents import tool
+from strands import tool
 
 logger = logging.getLogger()
 

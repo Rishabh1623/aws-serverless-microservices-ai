@@ -7,7 +7,7 @@ Tools that call the Cart Service API to manage shopping cart operations.
 import requests
 import logging
 from typing import Dict, Any
-from strands_agents import tool
+from strands import tool
 
 logger = logging.getLogger()
 
