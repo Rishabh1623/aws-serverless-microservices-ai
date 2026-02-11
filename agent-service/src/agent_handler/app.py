@@ -10,7 +10,7 @@ import os
 import logging
 from typing import Dict, Any
 
-from strands_agents import Agent
+from strands.agent import Agent
 from tools.product_tools import ProductTools
 from tools.cart_tools import CartTools
 from tools.order_tools import OrderTools
