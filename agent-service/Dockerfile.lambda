@@ -1,5 +1,5 @@
-# Multi-stage build for Lambda deployment package
-FROM public.ecr.aws/lambda/python:3.11 as builder
+# Use AWS Lambda Python 3.11 base image
+FROM public.ecr.aws/lambda/python:3.11
 
 # Install zip utility
 RUN yum install -y zip
@@ -16,9 +16,7 @@ COPY src/agent_handler/ ./package/
 
 # Create deployment package
 RUN cd package && \
-    zip -r /agent-service-lambda.zip . -x "*.pyc" "*__pycache__*" && \
-    cd ..
+    zip -r /agent-service-lambda.zip . -x "*.pyc" "*__pycache__*"
 
-# Final stage - just the zip file
-FROM scratch
-COPY --from=builder /agent-service-lambda.zip /
+# Keep container running so we can copy the file
+CMD ["tail", "-f", "/dev/null"]

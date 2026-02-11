@@ -9,13 +9,14 @@ echo "🔨 Building Lambda deployment package for Shopping Agent..."
 # Clean up previous builds
 rm -f agent-service-lambda.zip
 
-# Build Docker image with the package
-docker build -t agent-lambda-builder:latest -f Dockerfile.lambda .
+# Build Docker image
+docker build -t agent-lambda-builder:latest -f Dockerfile.lambda . 2>&1 | grep -v "FROM scratch"
 
-# Extract the zip file from the image
-docker create --name temp-builder agent-lambda-builder:latest
-docker cp temp-builder:/agent-service-lambda.zip ./agent-service-lambda.zip
-docker rm temp-builder
+# Run container to create the zip, then copy it out
+CONTAINER_ID=$(docker run -d agent-lambda-builder:latest tail -f /dev/null)
+docker cp $CONTAINER_ID:/agent-service-lambda.zip ./agent-service-lambda.zip
+docker stop $CONTAINER_ID > /dev/null
+docker rm $CONTAINER_ID > /dev/null
 
 # Show package size
 echo ""
