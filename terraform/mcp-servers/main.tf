@@ -76,8 +76,7 @@ resource "aws_lambda_function" "aws_observability_mcp" {
   # Environment variables
   environment {
     variables = {
-      LOG_LEVEL   = "INFO"
-      AWS_REGION  = var.aws_region
+      LOG_LEVEL = "INFO"
     }
   }
   
