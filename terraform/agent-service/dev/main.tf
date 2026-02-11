@@ -83,9 +83,6 @@ resource "aws_lambda_function" "agent" {
   tracing_config {
     mode = "Active"  # Enable X-Ray tracing
   }
-  
-  # Reserved concurrency (cost control)
-  reserved_concurrent_executions = 10  # Max 10 concurrent executions
 }
 
 # ============================================================================
