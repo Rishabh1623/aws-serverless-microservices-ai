@@ -88,13 +88,13 @@ class ProductTools:
             if min_price is not None:
                 filtered_products = [
                     p for p in filtered_products
-                    if p.get('price', 0) >= min_price
+                    if float(p.get('price', 0)) >= min_price
                 ]
             
             if max_price is not None:
                 filtered_products = [
                     p for p in filtered_products
-                    if p.get('price', float('inf')) <= max_price
+                    if float(p.get('price', float('inf'))) <= max_price
                 ]
             
             # Limit results
