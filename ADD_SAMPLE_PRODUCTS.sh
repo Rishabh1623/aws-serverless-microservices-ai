@@ -26,7 +26,7 @@ aws dynamodb put-item \
     "price": {"N": "699"},
     "category": {"S": "Electronics"},
     "stock": {"N": "50"},
-    "imageUrl": {"S": "https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/inspiron-notebooks/15-3520/media-gallery/notebook-inspiron-15-3520-nt-blue-gallery-4.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=402&qlt=100,1&resMode=sharp2&size=402,402&chrss=full"}
+    "imageUrl": {"S": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&h=300&fit=crop"}
   }'
 
 # Product 2: HP Laptop
@@ -40,7 +40,7 @@ aws dynamodb put-item \
     "price": {"N": "849"},
     "category": {"S": "Electronics"},
     "stock": {"N": "30"},
-    "imageUrl": {"S": "https://ssl-product-images.www8-hp.com/digmedialib/prodimg/lowres/c08260396.png"}
+    "imageUrl": {"S": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=300&fit=crop"}
   }'
 
 # Product 3: MacBook Air
@@ -54,7 +54,7 @@ aws dynamodb put-item \
     "price": {"N": "1199"},
     "category": {"S": "Electronics"},
     "stock": {"N": "25"},
-    "imageUrl": {"S": "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/macbook-air-midnight-select-20220606?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1653084303665"}
+    "imageUrl": {"S": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop"}
   }'
 
 # Product 4: Lenovo ThinkPad
@@ -68,7 +68,7 @@ aws dynamodb put-item \
     "price": {"N": "949"},
     "category": {"S": "Electronics"},
     "stock": {"N": "40"},
-    "imageUrl": {"S": "https://p3-ofp.static.pub/fes/cms/2021/05/14/sza0qfcgzw3vxnabsaey7vv8yg4wd1427965.png"}
+    "imageUrl": {"S": "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&h=300&fit=crop"}
   }'
 
 # Product 5: ASUS VivoBook
@@ -82,7 +82,7 @@ aws dynamodb put-item \
     "price": {"N": "649"},
     "category": {"S": "Electronics"},
     "stock": {"N": "35"},
-    "imageUrl": {"S": "https://dlcdnwebimgs.asus.com/gain/8BC8B3F0-3F3D-4F9E-9F0D-7F3E3C3F3F3F/w717/h525"}
+    "imageUrl": {"S": "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop"}
   }'
 
 # Product 6: Microsoft Surface Laptop
@@ -96,7 +96,7 @@ aws dynamodb put-item \
     "price": {"N": "999"},
     "category": {"S": "Electronics"},
     "stock": {"N": "20"},
-    "imageUrl": {"S": "https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE4LqQX?ver=c5c3"}
+    "imageUrl": {"S": "https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=400&h=300&fit=crop"}
   }'
 
 echo ""
