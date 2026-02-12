@@ -13,7 +13,7 @@ output "dynamodb_table_names" {
   value       = module.product_service.dynamodb_table_names
 }
 
-output "cloudwatch_log_group" {
-  description = "CloudWatch Log Group for API Gateway"
-  value       = module.product_service.cloudwatch_log_group
+output "api_gateway_id" {
+  description = "API Gateway REST API ID"
+  value       = module.product_service.api_gateway_id
 }
