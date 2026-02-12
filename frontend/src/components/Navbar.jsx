@@ -24,9 +24,6 @@ export default function Navbar() {
               <Link to="/orders" className="hover:text-primary transition px-3 py-2 rounded-md">
                 Orders
               </Link>
-              <Link to="/admin" className="hover:text-primary transition px-3 py-2 rounded-md">
-                Admin
-              </Link>
             </div>
           </div>
 
