@@ -12,7 +12,7 @@ Follow this guide from start to finish. Every command, every step, in order.
 
 ## 🎯 CURRENT STATUS
 
-### ✅ Completed (Steps 1-7, 9-16):
+### ✅ Completed (Steps 1-7, 9-12, 14-16):
 - EC2 instance launched and configured
 - All tools installed (Terraform, AWS CLI, Python, Node.js, Docker)
 - AWS credentials configured
@@ -22,13 +22,14 @@ Follow this guide from start to finish. Every command, every step, in order.
 - **Payment Service** deployed and working ✅
 - **Order Service** deployed and working ✅
 - **MCP Observability Server** deployed and working ✅
-- **Shopping Agent Service** deployed and working ✅ (Fixed import issues)
 - **Troubleshooting Agent Service** deployed and working ✅
 - **Frontend** deployed to S3 and accessible ✅
+- **Product Service** deployed and working ✅
 
-### ⚠️ Pending (Steps 8, 17-18):
-- **Product Service** - NOT YET DEPLOYED (do this now!)
-- **Frontend Update** - Needs Product API URL after Step 8
+### ⚠️ Pending (Steps 8, 13, 17-18):
+- **Product Service** - ✅ DEPLOYED (API: https://8s9xp3ko0d.execute-api.us-east-1.amazonaws.com/dev)
+- **Shopping Agent Service** - ⚠️ NEEDS REDEPLOYMENT (has placeholder environment variables)
+- **Frontend Update** - Needs Product API URL and Agent fix
 - **Demo Recording** - Final step after everything works
 
 ### 🔧 Known Issues Fixed:
@@ -37,11 +38,17 @@ Follow this guide from start to finish. Every command, every step, in order.
 - ✅ Docker build caching issues
 - ✅ S3 bucket permissions for frontend
 - ✅ Lambda permissions for Cart Service
+- ✅ Product Service Terraform created and deployed
+- ⚠️ Shopping Agent environment variables (placeholder "yes" values need fixing)
 
 ### 📍 Where You Are Now:
-**You need to deploy Product Service (Step 8) to complete the end-to-end flow.**
+**The Shopping Agent has placeholder environment variables ("yes" instead of real API URLs).**
 
-After that, update the frontend with the Product API URL (Step 17), then record your demo (Step 18).
+This is why the AI Assistant says services aren't responding. You need to:
+1. Redeploy Shopping Agent with correct API URLs (Step 13)
+2. Update frontend with Product API URL (Step 17)
+3. Test end-to-end flow
+4. Record demo (Step 18)
 
 ---
 
@@ -54,12 +61,12 @@ After that, update the frontend with the Product API URL (Step 17), then record 
 5. ✅ [Configure AWS](#step-5-configure-aws) - COMPLETED
 6. ✅ [Clone Project](#step-6-clone-project) - COMPLETED
 7. ✅ [Deploy Shared Infrastructure](#step-7-deploy-shared-infrastructure) - COMPLETED
-8. ⚠️ [Deploy Product Service](#step-8-deploy-product-service) - PENDING (Deploy now)
+8. ✅ [Deploy Product Service](#step-8-deploy-product-service) - COMPLETED (API deployed)
 9. ✅ [Deploy Cart Service](#step-9-deploy-cart-service) - COMPLETED
 10. ✅ [Deploy Payment Service](#step-10-deploy-payment-service) - COMPLETED
 11. ✅ [Deploy Order Service](#step-11-deploy-order-service) - COMPLETED
 12. ✅ [Deploy MCP Server](#step-12-deploy-mcp-server) - COMPLETED
-13. ✅ [Deploy Shopping Agent](#step-13-deploy-shopping-agent) - COMPLETED (Fixed imports)
+13. ⚠️ [Deploy Shopping Agent](#step-13-deploy-shopping-agent) - NEEDS REDEPLOYMENT (fix env vars)
 14. ✅ [Deploy Troubleshooting Agent](#step-14-deploy-troubleshooting-agent) - COMPLETED
 15. ✅ [Verify Deployment](#step-15-verify-deployment) - COMPLETED
 16. ✅ [Setup Frontend](#step-16-setup-frontend) - COMPLETED (Deployed to S3)
@@ -419,12 +426,15 @@ aws apigateway get-account --query 'cloudwatchRoleArn'
 
 ## STEP 8: Deploy Product Service
 
-**STATUS: ⚠️ PENDING - Deploy this now to complete end-to-end flow**
+**STATUS: ✅ COMPLETED**
 
-### Why This Was Skipped:
-During initial deployment, we focused on Cart, Payment, and Order services first. The Product Service is needed for the AI Shopping Assistant to search and retrieve products.
+**What Was Done:**
+- Created Terraform configuration from scratch (didn't exist in repo)
+- Deployed Product Service successfully
+- API URL: https://8s9xp3ko0d.execute-api.us-east-1.amazonaws.com/dev
+- Returns empty products array (DynamoDB table is empty, which is expected)
 
-### Deploy Now:
+**Note:** If you need to redeploy, use the commands below.
 
 ```bash
 cd ~/aws-serverless-microservices-ai/terraform/product-service/dev
@@ -457,14 +467,15 @@ export PRODUCT_API
 # Test list products
 curl "$PRODUCT_API/products"
 
-# Expected: JSON response with products array
-# Example: {"products": [{"id": "prod-001", "name": "Laptop", "price": 899}]}
+# Expected: {"products": [], "count": 0, "category": null}
 ```
 
 **✅ Checkpoint:** Product service deployed and working
 
 ### What's Next:
-After deploying Product Service, you need to update the frontend .env file with the real Product API URL and rebuild/redeploy the frontend (see Step 17).
+Now that Product Service is deployed, you need to:
+1. Redeploy Shopping Agent with correct API URLs (Step 13)
+2. Update frontend with Product API URL (Step 17)
 
 ---
 
@@ -578,7 +589,7 @@ echo "MCP_URL=$MCP_URL" >> ~/api-endpoints.txt
 
 ## STEP 13: Deploy Shopping Agent
 
-**STATUS: ✅ COMPLETED (with fixes applied)**
+**STATUS: ⚠️ NEEDS REDEPLOYMENT - Environment variables have placeholder values**
 
 **Issues Fixed:**
 1. ✅ Import errors: Changed `from strands_agents import tool` to `from strands import tool`
@@ -586,25 +597,56 @@ echo "MCP_URL=$MCP_URL" >> ~/api-endpoints.txt
 3. ✅ Docker build: Used `--no-cache` to pick up source changes
 4. ✅ Git conflicts: Stashed local changes to pull updates
 
+**Current Issue:**
+- Agent Lambda has placeholder environment variables (all set to "yes")
+- This causes the agent to say services aren't responding
+- Need to redeploy with correct API URLs
+
 **Current Status:**
 - Agent is deployed and responding intelligently
 - API URL: https://tvrhm1ftqe.execute-api.us-east-1.amazonaws.com
-- Handles errors gracefully when services are unavailable
+- But cannot call backend services due to invalid URLs
 
-### Deploy (if needed):
+### Redeploy with Correct API URLs:
 
 ```bash
 cd ~/aws-serverless-microservices-ai/terraform/agent-service/dev
 
-terraform init
+# Set all API URLs from deployed services
+export PRODUCT_API="https://8s9xp3ko0d.execute-api.us-east-1.amazonaws.com/dev"
+export CART_API="https://si0hbmhjk8.execute-api.us-east-1.amazonaws.com/dev"
+export ORDER_API="https://l7n8ar63w6.execute-api.us-east-1.amazonaws.com/dev"
+export PAYMENT_API="https://80znv63zqa.execute-api.us-east-1.amazonaws.com/dev"
 
-# Set environment variables for API URLs
+# Redeploy with correct environment variables
 terraform apply \
   -var="product_api_url=$PRODUCT_API" \
   -var="cart_api_url=$CART_API" \
   -var="order_api_url=$ORDER_API" \
   -var="payment_api_url=$PAYMENT_API" \
   -auto-approve
+```
+
+### Verify Environment Variables:
+
+```bash
+# Check Lambda function's environment variables
+aws lambda get-function-configuration \
+  --function-name agent-service-dev \
+  --query 'Environment.Variables' \
+  --output json
+```
+
+**Expected output:**
+```json
+{
+  "PRODUCT_API_URL": "https://8s9xp3ko0d.execute-api.us-east-1.amazonaws.com/dev",
+  "CART_API_URL": "https://si0hbmhjk8.execute-api.us-east-1.amazonaws.com/dev",
+  "ORDER_API_URL": "https://l7n8ar63w6.execute-api.us-east-1.amazonaws.com/dev",
+  "PAYMENT_API_URL": "https://80znv63zqa.execute-api.us-east-1.amazonaws.com/dev",
+  "BEDROCK_MODEL_ID": "anthropic.claude-3-sonnet-20240229-v1:0",
+  "LOG_LEVEL": "INFO"
+}
 ```
 
 ### Save Agent API:
@@ -808,6 +850,31 @@ echo "URL: http://${BUCKET_NAME}.s3-website-us-east-1.amazonaws.com"
 7. Complete checkout flow
 
 **✅ Checkpoint:** Complete end-to-end e-commerce flow working!
+
+---
+
+## STEP 17.5: Add Sample Products (Optional)
+
+**STATUS: Optional - Makes demo more realistic**
+
+The Product Service DynamoDB table is empty by default. Add sample products for testing:
+
+```bash
+cd ~/aws-serverless-microservices-ai
+
+# Make script executable
+chmod +x ADD_SAMPLE_PRODUCTS.sh
+
+# Run script
+./ADD_SAMPLE_PRODUCTS.sh
+```
+
+This adds 3 sample laptops:
+- Dell Inspiron 15 - $699
+- HP Pavilion - $849
+- Apple MacBook Air M2 - $1199
+
+**✅ Checkpoint:** Sample products available for AI Assistant to search!
 
 ---
 
