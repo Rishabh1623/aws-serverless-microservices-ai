@@ -85,6 +85,7 @@ module "cart_service" {
       timeout                 = 30
       environment_variables   = {
         CART_TABLE = "cart-service-cart_table-dev"
+        PRODUCT_API_URL = var.product_api_url
       }
     }
   }
