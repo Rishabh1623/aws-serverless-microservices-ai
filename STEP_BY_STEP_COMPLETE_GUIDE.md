@@ -10,26 +10,62 @@ Follow this guide from start to finish. Every command, every step, in order.
 
 ---
 
+## 🎯 CURRENT STATUS
+
+### ✅ Completed (Steps 1-7, 9-16):
+- EC2 instance launched and configured
+- All tools installed (Terraform, AWS CLI, Python, Node.js, Docker)
+- AWS credentials configured
+- Project cloned from GitHub
+- Shared infrastructure deployed (S3 + DynamoDB for Terraform state)
+- **Cart Service** deployed and working ✅
+- **Payment Service** deployed and working ✅
+- **Order Service** deployed and working ✅
+- **MCP Observability Server** deployed and working ✅
+- **Shopping Agent Service** deployed and working ✅ (Fixed import issues)
+- **Troubleshooting Agent Service** deployed and working ✅
+- **Frontend** deployed to S3 and accessible ✅
+
+### ⚠️ Pending (Steps 8, 17-18):
+- **Product Service** - NOT YET DEPLOYED (do this now!)
+- **Frontend Update** - Needs Product API URL after Step 8
+- **Demo Recording** - Final step after everything works
+
+### 🔧 Known Issues Fixed:
+- ✅ Agent import errors (strands_agents → strands)
+- ✅ Agent API method (agent.process() → agent())
+- ✅ Docker build caching issues
+- ✅ S3 bucket permissions for frontend
+- ✅ Lambda permissions for Cart Service
+
+### 📍 Where You Are Now:
+**You need to deploy Product Service (Step 8) to complete the end-to-end flow.**
+
+After that, update the frontend with the Product API URL (Step 17), then record your demo (Step 18).
+
+---
+
 ## 📋 Table of Contents
 
-1. [Prerequisites Check](#step-1-prerequisites-check)
-2. [Launch EC2 Instance](#step-2-launch-ec2-instance)
-3. [Connect to EC2](#step-3-connect-to-ec2)
-4. [Install Tools](#step-4-install-tools)
-5. [Configure AWS](#step-5-configure-aws)
-6. [Clone Project](#step-6-clone-project)
-7. [Deploy Shared Infrastructure](#step-7-deploy-shared-infrastructure)
-8. [Deploy Product Service](#step-8-deploy-product-service)
-9. [Deploy Cart Service](#step-9-deploy-cart-service)
-10. [Deploy Payment Service](#step-10-deploy-payment-service)
-11. [Deploy Order Service](#step-11-deploy-order-service)
-12. [Deploy MCP Server](#step-12-deploy-mcp-server)
-13. [Deploy Shopping Agent](#step-13-deploy-shopping-agent)
-14. [Deploy Troubleshooting Agent](#step-14-deploy-troubleshooting-agent)
-15. [Verify Deployment](#step-15-verify-deployment)
-16. [Setup Frontend](#step-16-setup-frontend)
-17. [Record Demo](#step-17-record-demo)
-18. [Cleanup (Optional)](#step-18-cleanup-optional)
+1. ✅ [Prerequisites Check](#step-1-prerequisites-check) - COMPLETED
+2. ✅ [Launch EC2 Instance](#step-2-launch-ec2-instance) - COMPLETED
+3. ✅ [Connect to EC2](#step-3-connect-to-ec2) - COMPLETED
+4. ✅ [Install Tools](#step-4-install-tools) - COMPLETED
+5. ✅ [Configure AWS](#step-5-configure-aws) - COMPLETED
+6. ✅ [Clone Project](#step-6-clone-project) - COMPLETED
+7. ✅ [Deploy Shared Infrastructure](#step-7-deploy-shared-infrastructure) - COMPLETED
+8. ⚠️ [Deploy Product Service](#step-8-deploy-product-service) - PENDING (Deploy now)
+9. ✅ [Deploy Cart Service](#step-9-deploy-cart-service) - COMPLETED
+10. ✅ [Deploy Payment Service](#step-10-deploy-payment-service) - COMPLETED
+11. ✅ [Deploy Order Service](#step-11-deploy-order-service) - COMPLETED
+12. ✅ [Deploy MCP Server](#step-12-deploy-mcp-server) - COMPLETED
+13. ✅ [Deploy Shopping Agent](#step-13-deploy-shopping-agent) - COMPLETED (Fixed imports)
+14. ✅ [Deploy Troubleshooting Agent](#step-14-deploy-troubleshooting-agent) - COMPLETED
+15. ✅ [Verify Deployment](#step-15-verify-deployment) - COMPLETED
+16. ✅ [Setup Frontend](#step-16-setup-frontend) - COMPLETED (Deployed to S3)
+17. ⚠️ [Update Frontend with Product API](#step-17-update-frontend-with-product-api) - PENDING
+18. ⚠️ [Record Demo](#step-18-record-demo) - PENDING
+19. [Cleanup (Optional)](#step-19-cleanup-optional)
 
 ---
 
@@ -383,17 +419,22 @@ aws apigateway get-account --query 'cloudwatchRoleArn'
 
 ## STEP 8: Deploy Product Service
 
-### Deploy Dev Environment:
+**STATUS: ⚠️ PENDING - Deploy this now to complete end-to-end flow**
+
+### Why This Was Skipped:
+During initial deployment, we focused on Cart, Payment, and Order services first. The Product Service is needed for the AI Shopping Assistant to search and retrieve products.
+
+### Deploy Now:
 
 ```bash
 cd ~/aws-serverless-microservices-ai/terraform/product-service/dev
 
+# Initialize Terraform
 terraform init
-terraform plan
-terraform apply
-```
 
-**Type `yes` when prompted.**
+# Deploy Product Service
+terraform apply -auto-approve
+```
 
 **Wait 3-5 minutes for deployment.**
 
@@ -405,30 +446,46 @@ echo "Product API: $PRODUCT_API"
 
 # Save to file
 echo "PRODUCT_API=$PRODUCT_API" >> ~/api-endpoints.txt
+
+# Also export for later use
+export PRODUCT_API
 ```
 
 ### Test Product Service:
 
 ```bash
+# Test list products
 curl "$PRODUCT_API/products"
+
+# Expected: JSON response with products array
+# Example: {"products": [{"id": "prod-001", "name": "Laptop", "price": 899}]}
 ```
 
-**Expected:** JSON response with products (or empty array)
-
 **✅ Checkpoint:** Product service deployed and working
+
+### What's Next:
+After deploying Product Service, you need to update the frontend .env file with the real Product API URL and rebuild/redeploy the frontend (see Step 17).
 
 ---
 
 ## STEP 9: Deploy Cart Service
 
+**STATUS: ✅ COMPLETED**
+
+**What Was Done:**
+- Deployed Cart Service successfully
+- Fixed Lambda permissions manually (added permissions for all 3 Lambda functions)
+- Tested all endpoints (GET, POST, DELETE)
+- API URL: https://si0hbmhjk8.execute-api.us-east-1.amazonaws.com/dev
+
+**Note:** If you need to redeploy, use the commands below.
+
 ```bash
 cd ~/aws-serverless-microservices-ai/terraform/cart-service/dev
 
 terraform init
-terraform apply
+terraform apply -auto-approve
 ```
-
-**Type `yes` when prompted.**
 
 ### Save API Endpoint:
 
@@ -521,18 +578,34 @@ echo "MCP_URL=$MCP_URL" >> ~/api-endpoints.txt
 
 ## STEP 13: Deploy Shopping Agent
 
+**STATUS: ✅ COMPLETED (with fixes applied)**
+
+**Issues Fixed:**
+1. ✅ Import errors: Changed `from strands_agents import tool` to `from strands import tool`
+2. ✅ Agent API: Changed `agent.process()` to `agent()` call
+3. ✅ Docker build: Used `--no-cache` to pick up source changes
+4. ✅ Git conflicts: Stashed local changes to pull updates
+
+**Current Status:**
+- Agent is deployed and responding intelligently
+- API URL: https://tvrhm1ftqe.execute-api.us-east-1.amazonaws.com
+- Handles errors gracefully when services are unavailable
+
+### Deploy (if needed):
+
 ```bash
 cd ~/aws-serverless-microservices-ai/terraform/agent-service/dev
 
 terraform init
+
+# Set environment variables for API URLs
 terraform apply \
   -var="product_api_url=$PRODUCT_API" \
   -var="cart_api_url=$CART_API" \
   -var="order_api_url=$ORDER_API" \
-  -var="payment_api_url=$PAYMENT_API"
+  -var="payment_api_url=$PAYMENT_API" \
+  -auto-approve
 ```
-
-**Type `yes` when prompted.**
 
 ### Save Agent API:
 
@@ -550,7 +623,7 @@ curl -X POST "$AGENT_API/agent" \
   -d '{"message": "Show me products", "userId": "user123"}'
 ```
 
-**Expected:** JSON response from AI agent
+**Expected:** JSON response from AI agent with intelligent conversation
 
 **✅ Checkpoint:** Shopping agent deployed and working
 
@@ -631,16 +704,26 @@ aws cloudwatch describe-alarms --state-value ALARM
 
 ## STEP 16: Setup Frontend
 
-### On Your Local Machine (Not EC2):
+**STATUS: ✅ COMPLETED (Deployed to AWS S3)**
+
+**What Was Done:**
+- Installed Node.js on EC2
+- Built React frontend with Vite
+- Deployed to S3 bucket as static website
+- Frontend URL: http://serverless-microservices-frontend-543927035352.s3-website-us-east-1.amazonaws.com
+
+**Current Issue:**
+- Product API is set to placeholder URL, so product search doesn't work
+- Need to update .env with real Product API URL after deploying Product Service (Step 8)
+
+### Frontend is Already Deployed
+
+If you need to rebuild/redeploy, use these commands:
 
 ```bash
-# Navigate to project
-cd path/to/aws-serverless-microservices-ai/frontend
+cd ~/aws-serverless-microservices-ai/frontend
 
-# Install dependencies
-npm install
-
-# Create .env file
+# Update .env with real API URLs
 cat > .env << EOF
 VITE_PRODUCT_API=$PRODUCT_API
 VITE_CART_API=$CART_API
@@ -650,23 +733,87 @@ VITE_AGENT_API=$AGENT_API
 VITE_TROUBLESHOOT_API=$TROUBLESHOOT_API
 EOF
 
-# Start frontend
-npm run dev
+# Rebuild
+npm run build
+
+# Redeploy to S3
+BUCKET_NAME="serverless-microservices-frontend-${AWS_ACCOUNT_ID}"
+aws s3 sync dist/ s3://${BUCKET_NAME}/ --delete
 ```
 
-**Open browser:** http://localhost:5173
+**Open browser:** http://serverless-microservices-frontend-543927035352.s3-website-us-east-1.amazonaws.com
 
 **You should see:**
 - Home page with architecture
-- Working product catalog
-- AI Shopping Assistant
+- Working AI Shopping Assistant
+- Cart functionality
 - Admin Dashboard
+- Orders page
 
-**✅ Checkpoint:** Frontend running with real AWS backend!
+**✅ Checkpoint:** Frontend deployed and accessible!
 
 ---
 
-## STEP 17: Record Demo
+## STEP 17: Update Frontend with Product API
+
+**STATUS: ⚠️ PENDING - Do this after deploying Product Service (Step 8)**
+
+After you deploy the Product Service in Step 8, you need to update the frontend to use the real Product API URL.
+
+### Update and Redeploy Frontend:
+
+```bash
+cd ~/aws-serverless-microservices-ai/frontend
+
+# Make sure PRODUCT_API is set (from Step 8)
+echo "Product API: $PRODUCT_API"
+
+# Update .env file with real Product API
+cat > .env << EOF
+VITE_PRODUCT_API=$PRODUCT_API
+VITE_CART_API=https://si0hbmhjk8.execute-api.us-east-1.amazonaws.com/dev
+VITE_ORDER_API=https://l7n8ar63w6.execute-api.us-east-1.amazonaws.com/dev
+VITE_PAYMENT_API=https://80znv63zqa.execute-api.us-east-1.amazonaws.com/dev
+VITE_AGENT_API=https://tvrhm1ftqe.execute-api.us-east-1.amazonaws.com
+VITE_TROUBLESHOOT_API=https://b05ax9z4m4.execute-api.us-east-1.amazonaws.com
+EOF
+
+# Rebuild frontend
+npm run build
+
+# Redeploy to S3
+BUCKET_NAME="serverless-microservices-frontend-${AWS_ACCOUNT_ID}"
+aws s3 sync dist/ s3://${BUCKET_NAME}/ \
+  --delete \
+  --cache-control "public, max-age=31536000" \
+  --exclude "index.html"
+
+# Upload index.html with no-cache
+aws s3 cp dist/index.html s3://${BUCKET_NAME}/index.html \
+  --cache-control "no-cache"
+
+echo ""
+echo "✅ Frontend updated with Product API!"
+echo "URL: http://${BUCKET_NAME}.s3-website-us-east-1.amazonaws.com"
+```
+
+### Test Complete End-to-End Flow:
+
+1. Open frontend URL in browser
+2. Go to "AI Assistant" page
+3. Type: "Show me laptops under $1000"
+4. Agent should now search products successfully
+5. Type: "Add the Dell laptop"
+6. Type: "Create my order"
+7. Complete checkout flow
+
+**✅ Checkpoint:** Complete end-to-end e-commerce flow working!
+
+---
+
+## STEP 18: Record Demo
+
+**STATUS: ⚠️ PENDING**
 
 ### Prepare for Recording:
 
