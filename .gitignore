@@ -98,10 +98,12 @@ test-results.xml
 # Why: AWS credentials and deployment artifacts shouldn't be in Git
 # What: AWS-specific files and build artifacts
 
-# AWS SAM (if used)
+# AWS SAM
 .aws-sam/
 packaged.yaml
+samconfig.toml
 samconfig.toml.bak
+.aws-sam-build/
 
 # AWS credentials (CRITICAL - never commit!)
 .aws/

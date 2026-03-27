@@ -17,28 +17,22 @@ variable "environment" {
 }
 
 # API Endpoints
-variable "product_api_url" {
-  description = "Product service API URL"
+variable "hotel_api_url" {
+  description = "Hotel service API URL"
   type        = string
-  default     = "https://8s9xp3ko0d.execute-api.us-east-1.amazonaws.com/dev"
-}
-
-variable "cart_api_url" {
-  description = "Cart service API URL"
-  type        = string
-  default     = "https://si0hbmhjk8.execute-api.us-east-1.amazonaws.com/dev"
+  default     = "https://api.example.com/hotels"
 }
 
 variable "order_api_url" {
   description = "Order service API URL"
   type        = string
-  default     = "https://l7n8ar63w6.execute-api.us-east-1.amazonaws.com/dev"
+  default     = "https://api.example.com/orders"
 }
 
 variable "payment_api_url" {
   description = "Payment service API URL"
   type        = string
-  default     = "https://80znv63zqa.execute-api.us-east-1.amazonaws.com/dev"
+  default     = "https://api.example.com/payments"
 }
 
 # Lambda Configuration

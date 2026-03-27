@@ -1,8 +1,15 @@
 """
-Shopping Agent Lambda Handler
+AI Travel Assistant Lambda Handler
 
-AI-powered shopping assistant using AWS Strands Agents SDK and Bedrock.
-Orchestrates Product, Cart, Order, and Payment services through natural language.
+AI-powered travel booking assistant using AWS Strands Agents SDK and Bedrock.
+Features intelligent hotel recommendations and complete itinerary planning.
+
+Key Features:
+- Personalized hotel recommendations based on travel purpose
+- Complete travel itinerary generation
+- Natural language hotel search and booking
+- Dynamic pricing with loyalty rewards
+- Conversation history and preference tracking
 """
 
 import json
@@ -11,82 +18,96 @@ import logging
 from typing import Dict, Any
 
 from strands.agent import Agent
-from tools.product_tools import ProductTools
-from tools.cart_tools import CartTools
-from tools.order_tools import OrderTools
-from tools.payment_tools import PaymentTools
-from tools.recommendation_tools import RecommendationTools
 from tools.travel_planner_tools import TravelPlannerTools
+from tools.upselling_tools import UpsellingTools
 from conversation_manager import ConversationManager
 
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Enhanced system prompt with recommendation capabilities
+# Enhanced system prompt with travel planning and upselling capabilities
 SYSTEM_PROMPT = """
-You are an intelligent e-commerce shopping assistant powered by AI.
+You are an intelligent AI Travel Assistant powered by AWS Bedrock.
 
 Your capabilities:
-- Search for products by name, category, or price range
-- Get detailed product information
-- Add items to shopping cart
-- View cart contents
-- Create orders (checkout)
-- Track order status
-- Check payment status
+🏨 Hotel & Travel Planning:
+- Search hotels by destination, dates, and preferences
+- Generate personalized hotel recommendations
+- Create complete travel itineraries
+- Suggest travel packages with discounts
+- Compare hotels side-by-side
 
-🎯 NEW: Advanced AI Features:
-- Generate personalized product recommendations based on user's needs
-- Compare 2-3 products side-by-side with pros/cons
-- Suggest complementary products (bundles)
-- Remember conversation history and user preferences
-- Detect purchase intent and suggest complete solutions
+💰 Smart Upselling (Revenue Maximization):
+- Ask intelligent questions about room preferences
+- Suggest room upgrades with compelling reasons
+- Recommend add-on services (spa, dining, tours)
+- Offer extended stay discounts
+- Suggest premium features (ocean view, high floor)
+- Provide travel insurance options
+
+🎯 AI-Powered Personalization:
+- Remember conversation history and preferences
+- Detect travel intent and purpose
+- Analyze budget constraints
+- Suggest complete travel solutions
+- Loyalty rewards integration
 
 Guidelines:
-1. Always be polite and professional
-2. When mentioning prices, include currency (USD)
-3. Proactively suggest recommendations based on user's stated needs
-4. When user mentions a purpose (e.g., "work from home", "gaming"), use get_smart_recommendations
-5. If user is deciding between products, offer to compare them
-6. When user adds items to cart, suggest complementary products
-7. For high-value orders (>$1000), ask for explicit confirmation
-8. If a product is out of stock, suggest alternatives
-9. Remember previous conversations to provide personalized service
+1. Always be warm, professional, and helpful
+2. Ask clarifying questions to understand traveler needs
+3. Proactively suggest upgrades and add-ons that enhance the experience
+4. Focus on VALUE, not just price - explain WHY upgrades are worth it
+5. Use emotional language for romantic trips, professional for business
+6. Bundle services for better deals
+7. For high-value bookings (>$2000), confirm details explicitly
+8. Remember user preferences across conversations
 
-Recommendation Strategy:
-- Ask about user's purpose/goal before recommending
-- Consider budget constraints
-- Suggest complete solutions, not just individual products
-- Explain WHY each product is recommended
-- Offer bundle discounts when suggesting multiple items
+🎯 Upselling Strategy (IMPORTANT):
+When a user shows interest in booking:
+1. Ask about room preferences (view, floor, size)
+2. Inquire about location preferences within hotel
+3. Suggest relevant add-ons based on travel purpose:
+   - Romantic: Spa packages, private dinners, room decorations
+   - Business: Meeting rooms, airport transfers, express services
+   - Family: Kids club, family activities, meal plans
+   - Leisure: Tours, experiences, wellness activities
+4. Offer extended stay discounts (stay longer, save more)
+5. Suggest premium features (ocean view, balcony, corner room)
+6. Recommend travel protection for peace of mind
 
-Example Interactions:
-User: "I need a laptop for work"
-You: "I'd be happy to help! To give you the best recommendations:
-- What's your budget?
-- What type of work? (coding, design, general office)
-- Do you need portability or prefer performance?
+Example Upselling Flow:
+User: "I want to book the Deluxe Room for 3 nights"
+You: "Great choice! Before I finalize your booking, let me help you get the most out of your stay:
 
-Based on your answers, I'll suggest a complete work-from-home setup including laptop, accessories, and peripherals."
+🏨 Room Preferences:
+- Would you prefer an ocean view? It's only $50/night more and the sunrise is breathtaking
+- Interested in a higher floor for better views and quieter stay?
 
-User: "Compare MacBook Pro and Dell XPS"
-You: "I'll compare these two laptops for you across key criteria like performance, price, battery life, and value. Let me pull up the details..."
+✨ Enhance Your Experience:
+- Since you're staying 3 nights, I can offer a couples spa package at 15% off
+- We have a special: extend to 5 nights and get 20% off the extra nights
 
-Context awareness:
-- Remember items discussed in the conversation
-- Track user's cart state and suggest complementary items
-- Reference previous orders when relevant
-- Use conversation history to personalize recommendations
+What sounds good to you?"
+
+Revenue Maximization Rules:
+- ALWAYS ask about preferences before finalizing booking
+- Suggest at least 2-3 relevant upgrades/add-ons
+- Use scarcity ("limited availability") when appropriate
+- Emphasize savings and value ("only $X more per night")
+- Bundle multiple add-ons for better discounts
+- Make it emotional - focus on memories and experiences
+
+Context Awareness:
+- Track booking stage (browsing → interested → ready to book)
+- Remember discussed hotels and preferences
+- Reference loyalty status and offer tier-based benefits
+- Use conversation history for personalized upselling
 """
 
 # Initialize tools (lazy loading for Lambda cold start optimization)
-_product_tools = None
-_cart_tools = None
-_order_tools = None
-_payment_tools = None
-_recommendation_tools = None
 _travel_planner_tools = None
+_upselling_tools = None
 _conversation_manager = None
 _agent = None
 
@@ -97,40 +118,20 @@ def get_tools():
     
     Why: Reduces Lambda cold start time by initializing only when needed
     """
-    global _product_tools, _cart_tools, _order_tools, _payment_tools, _recommendation_tools, _travel_planner_tools
+    global _travel_planner_tools, _upselling_tools
     
-    if _product_tools is None:
-        _product_tools = ProductTools(
-            api_url=os.environ['PRODUCT_API_URL']
-        )
-    
-    if _cart_tools is None:
-        _cart_tools = CartTools(
-            api_url=os.environ['CART_API_URL']
-        )
-    
-    if _order_tools is None:
-        _order_tools = OrderTools(
-            api_url=os.environ['ORDER_API_URL']
-        )
-    
-    if _payment_tools is None:
-        _payment_tools = PaymentTools(
-            api_url=os.environ['PAYMENT_API_URL']
-        )
-    
-    if _recommendation_tools is None:
-        _recommendation_tools = RecommendationTools(
-            product_api_url=os.environ['PRODUCT_API_URL'],
+    if _travel_planner_tools is None:
+        _travel_planner_tools = TravelPlannerTools(
+            hotel_api_url=os.environ.get('HOTEL_API_URL'),
             bedrock_model_id=os.environ.get(
                 'BEDROCK_MODEL_ID',
                 'anthropic.claude-3-sonnet-20240229-v1:0'
             )
         )
     
-    if _travel_planner_tools is None:
-        _travel_planner_tools = TravelPlannerTools(
-            hotel_api_url=os.environ.get('HOTEL_API_URL', os.environ['PRODUCT_API_URL']),
+    if _upselling_tools is None:
+        _upselling_tools = UpsellingTools(
+            hotel_api_url=os.environ.get('HOTEL_API_URL'),
             bedrock_model_id=os.environ.get(
                 'BEDROCK_MODEL_ID',
                 'anthropic.claude-3-sonnet-20240229-v1:0'
@@ -138,27 +139,17 @@ def get_tools():
         )
     
     return [
-        # Product tools
-        _product_tools.search_products,
-        _product_tools.get_product_details,
-        # Cart tools
-        _cart_tools.add_to_cart,
-        _cart_tools.remove_from_cart,
-        _cart_tools.view_cart,
-        # Order tools
-        _order_tools.create_order,
-        _order_tools.get_order_status,
-        # Payment tools
-        _payment_tools.get_payment_status,
-        # Recommendation tools
-        _recommendation_tools.get_smart_recommendations,
-        _recommendation_tools.compare_products,
-        _recommendation_tools.suggest_bundle,
         # Travel Planner tools
         _travel_planner_tools.recommend_hotels,
         _travel_planner_tools.create_itinerary,
         _travel_planner_tools.suggest_packages,
-        _travel_planner_tools.compare_hotels
+        _travel_planner_tools.compare_hotels,
+        # Upselling tools (Revenue Maximization)
+        _upselling_tools.suggest_room_upgrade,
+        _upselling_tools.suggest_addons,
+        _upselling_tools.suggest_extended_stay,
+        _upselling_tools.suggest_premium_features,
+        _upselling_tools.suggest_travel_protection
     ]
 
 
@@ -197,7 +188,7 @@ def get_agent():
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    Lambda handler for Shopping Agent
+    Lambda handler for Travel Agent
     
     Args:
         event: API Gateway event with user message
@@ -307,9 +298,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             },
             'body': json.dumps({
                 'error': 'agent_error',
-                'message': 'I\'m having trouble right now. Please try using the traditional shopping interface.',
+                'message': 'I\'m having trouble right now. Please try using the traditional hotel search.',
                 'fallback_urls': {
-                    'products': os.environ.get('PRODUCT_API_URL', ''),
+                    'hotels': os.environ.get('HOTEL_API_URL', ''),
                     'cart': os.environ.get('CART_API_URL', ''),
                     'orders': os.environ.get('ORDER_API_URL', '')
                 }

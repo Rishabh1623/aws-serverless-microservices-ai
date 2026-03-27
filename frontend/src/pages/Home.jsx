@@ -12,34 +12,34 @@ export default function Home() {
             </span>
           </div>
           <h1 className="text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Next-Gen E-Commerce
+            AI-Powered Travel Platform
             <br />
-            <span className="text-primary">with AI Shopping Assistant</span>
+            <span className="text-primary">Book Hotels with Intelligence</span>
           </h1>
           <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto">
-            Production-grade serverless microservices architecture with AWS Bedrock AI, 
-            real-time inventory, and intelligent DevOps troubleshooting
+            Production-grade serverless travel platform with AWS Bedrock AI assistant, 
+            real-time hotel availability, and intelligent booking management
           </p>
           <div className="flex justify-center space-x-4">
             <Link 
               to="/products" 
               className="bg-primary text-white px-8 py-4 rounded-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
             >
-              🛍️ Browse Products
+              🏨 Browse Hotels
             </Link>
             <Link 
               to="/ai-assistant" 
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl font-semibold text-lg"
             >
-              🤖 Try AI Assistant
+              🤖 AI Travel Assistant
             </Link>
           </div>
         </div>
 
         {/* Stats Section */}
         <div className="grid md:grid-cols-4 gap-6 mb-16">
-          <StatCard number="40+" label="Products" icon="📦" />
-          <StatCard number="8" label="Categories" icon="🏷️" />
+          <StatCard number="500+" label="Hotels" icon="🏨" />
+          <StatCard number="50+" label="Destinations" icon="🌍" />
           <StatCard number="99.9%" label="Uptime SLA" icon="✅" />
           <StatCard number="<100ms" label="API Response" icon="🚀" />
         </div>
@@ -54,8 +54,8 @@ export default function Home() {
               icon="🏗️"
               title="Microservices"
               items={[
-                "Product Service",
-                "Cart Service", 
+                "Hotel Service",
+                "Booking Service", 
                 "Payment Service",
                 "Order Service"
               ]}
@@ -64,10 +64,10 @@ export default function Home() {
               icon="🤖"
               title="AI Agents"
               items={[
-                "Shopping Assistant (Bedrock)",
-                "DevOps Troubleshooter",
+                "Travel Assistant (Bedrock)",
+                "Hotel Recommendations",
                 "MCP Observability",
-                "Natural Language Interface"
+                "Natural Language Booking"
               ]}
             />
             <ArchitectureCard
@@ -89,30 +89,30 @@ export default function Home() {
         </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           <FeatureCard
-            icon="🛍️"
-            title="Product Catalog"
-            description="40+ products across 8 categories with real-time inventory"
+            icon="🏨"
+            title="Hotel Search"
+            description="500+ hotels across 50+ destinations with real-time availability"
             link="/products"
             gradient="from-blue-500 to-blue-600"
           />
           <FeatureCard
-            icon="🛒"
-            title="Shopping Cart"
-            description="Persistent cart with instant updates"
+            icon="🧳"
+            title="Trip Planning"
+            description="Plan your perfect trip with AI recommendations"
             link="/cart"
             gradient="from-green-500 to-green-600"
           />
           <FeatureCard
             icon="🤖"
-            title="AI Assistant"
-            description="Natural language shopping powered by Claude 3"
+            title="AI Travel Assistant"
+            description="Natural language hotel booking powered by Claude 3"
             link="/ai-assistant"
             gradient="from-purple-500 to-purple-600"
           />
           <FeatureCard
-            icon="📦"
-            title="Order Tracking"
-            description="Real-time order status and history"
+            icon="📋"
+            title="Booking Management"
+            description="Real-time booking status and history"
             link="/orders"
             gradient="from-orange-500 to-orange-600"
           />

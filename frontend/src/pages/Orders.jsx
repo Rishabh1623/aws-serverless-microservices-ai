@@ -19,27 +19,31 @@ export default function Orders() {
       // Demo data
       setOrders([
         {
-          orderId: 'ORD-12345',
+          orderId: 'BKG-12345',
           userId: DEMO_USER_ID,
           items: [
-            { name: 'Dell XPS 13', price: 999, quantity: 1 },
-            { name: 'Sony WH-1000XM5', price: 399, quantity: 2 }
+            { name: 'Grand Hotel Paris', price: 299, quantity: 3, type: 'nights' },
+            { name: 'Boutique Marais', price: 189, quantity: 2, type: 'nights' }
           ],
-          total: 1797,
+          total: 1275,
           status: 'completed',
           createdAt: new Date().toISOString(),
-          paymentStatus: 'paid'
+          paymentStatus: 'paid',
+          checkIn: '2024-06-15',
+          checkOut: '2024-06-20'
         },
         {
-          orderId: 'ORD-12344',
+          orderId: 'BKG-12344',
           userId: DEMO_USER_ID,
           items: [
-            { name: 'iPhone 15 Pro', price: 1099, quantity: 1 }
+            { name: 'Tokyo Imperial Hotel', price: 329, quantity: 4, type: 'nights' }
           ],
-          total: 1099,
-          status: 'processing',
+          total: 1316,
+          status: 'confirmed',
           createdAt: new Date(Date.now() - 86400000).toISOString(),
-          paymentStatus: 'paid'
+          paymentStatus: 'paid',
+          checkIn: '2024-07-10',
+          checkOut: '2024-07-14'
         }
       ])
     } finally {
@@ -50,9 +54,9 @@ export default function Orders() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800'
-      case 'processing': return 'bg-yellow-100 text-yellow-800'
-      case 'pending': return 'bg-gray-100 text-gray-800'
-      case 'failed': return 'bg-red-100 text-red-800'
+      case 'confirmed': return 'bg-blue-100 text-blue-800'
+      case 'pending': return 'bg-yellow-100 text-yellow-800'
+      case 'cancelled': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -61,7 +65,7 @@ export default function Orders() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading orders...</p>
+        <p className="mt-4 text-gray-600">Loading bookings...</p>
       </div>
     )
   }
@@ -70,10 +74,10 @@ export default function Orders() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">
         <div className="text-6xl mb-4">📦</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">No orders yet</h2>
-        <p className="text-gray-600 mb-6">Start shopping to see your orders here</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">No bookings yet</h2>
+        <p className="text-gray-600 mb-6">Start exploring hotels to see your bookings here</p>
         <a href="/products" className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition inline-block">
-          Browse Products
+          Browse Hotels
         </a>
       </div>
     )
@@ -81,14 +85,14 @@ export default function Orders() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">Order History</h1>
+      <h1 className="text-4xl font-bold text-gray-900 mb-8">Booking History</h1>
 
       <div className="space-y-6">
         {orders.map(order => (
           <div key={order.orderId} className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-semibold">Order {order.orderId}</h3>
+                <h3 className="text-lg font-semibold">Booking {order.orderId}</h3>
                 <p className="text-sm text-gray-600">
                   {new Date(order.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -98,6 +102,11 @@ export default function Orders() {
                     minute: '2-digit'
                   })}
                 </p>
+                {order.checkIn && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    📅 {order.checkIn} to {order.checkOut}
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
@@ -111,8 +120,8 @@ export default function Orders() {
               {order.items.map((item, idx) => (
                 <div key={idx} className={`flex justify-between items-center ${idx !== 0 ? 'mt-4 pt-4 border-t' : ''}`}>
                   <div>
-                    <h4 className="font-medium">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    <h4 className="font-medium">🏨 {item.name}</h4>
+                    <p className="text-sm text-gray-600">{item.quantity} {item.type || 'nights'} × ${item.price}/{item.type === 'nights' ? 'night' : 'item'}</p>
                   </div>
                   <p className="font-semibold">${item.price * item.quantity}</p>
                 </div>

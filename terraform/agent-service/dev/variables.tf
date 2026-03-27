@@ -4,27 +4,20 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "product_api_url" {
-  description = "Product Service API URL"
+variable "hotel_api_url" {
+  description = "Hotel Service API URL"
   type        = string
-  # Get this from Product Service deployment output
-  # Example: "https://abc123.execute-api.us-east-1.amazonaws.com"
-}
-
-variable "cart_api_url" {
-  description = "Cart Service API URL"
-  type        = string
-  # Get this from Cart Service deployment output
+  default     = "https://api.example.com/hotels"
 }
 
 variable "order_api_url" {
   description = "Order Service API URL"
   type        = string
-  # Get this from Order Service deployment output
+  default     = "https://api.example.com/orders"
 }
 
 variable "payment_api_url" {
   description = "Payment Service API URL"
   type        = string
-  # Get this from Payment Service deployment output
+  default     = "https://api.example.com/payments"
 }

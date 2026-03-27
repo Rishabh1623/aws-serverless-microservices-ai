@@ -1,5 +1,5 @@
 """
-Shopping Agent Handler Package
+Travel Agent Handler Package
 """
 
 from .app import lambda_handler

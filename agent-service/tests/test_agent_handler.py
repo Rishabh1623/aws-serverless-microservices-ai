@@ -1,5 +1,5 @@
 """
-Unit tests for Shopping Agent Handler
+Unit tests for Travel Agent Handler
 """
 
 import json
@@ -37,14 +37,14 @@ class TestAgentHandler:
         # Mock agent response
         mock_agent = Mock()
         mock_response = Mock()
-        mock_response.text = "I found 2 laptops under $1000"
-        mock_response.tools_used = ['search_products']
+        mock_response.text = "I found 2 hotels in Paris under $200/night"
+        mock_response.tools_used = ['search_hotels']
         mock_agent.process.return_value = mock_response
         mock_get_agent.return_value = mock_agent
         
         event = {
             'body': json.dumps({
-                'message': 'I want to buy a laptop under $1000',
+                'message': 'I want to book a hotel in Paris under $200',
                 'userId': 'test-user'
             })
         }

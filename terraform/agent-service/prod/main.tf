@@ -1,6 +1,6 @@
 # ============================================================================
 # AGENT SERVICE - PRODUCTION
-# AI Shopping Assistant with AWS Bedrock
+# AI Travel Assistant with AWS Bedrock
 # ============================================================================
 
 # ============================================================================
@@ -25,12 +25,12 @@ locals {
 }
 
 # ============================================================================
-# LAMBDA FUNCTION - SHOPPING AGENT (PRODUCTION)
+# LAMBDA FUNCTION - AI TRAVEL AGENT (PRODUCTION)
 # ============================================================================
 
 resource "aws_lambda_function" "agent" {
   function_name = "${local.service_name}-${local.environment}"
-  description   = "AI Shopping Assistant (Production) - Strands Agents + Bedrock"
+  description   = "AI Travel Assistant (Production) - Strands Agents + Bedrock"
   
   filename         = "${path.module}/../../../agent-service-lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../../agent-service-lambda.zip")
@@ -46,8 +46,7 @@ resource "aws_lambda_function" "agent" {
   
   environment {
     variables = {
-      PRODUCT_API_URL  = local.product_api_url
-      CART_API_URL     = local.cart_api_url
+      HOTEL_API_URL    = local.hotel_api_url
       ORDER_API_URL    = local.order_api_url
       PAYMENT_API_URL  = local.payment_api_url
       BEDROCK_MODEL_ID = var.bedrock_model_id
@@ -164,7 +163,7 @@ resource "aws_cloudwatch_log_group" "agent" {
 resource "aws_apigatewayv2_api" "agent" {
   name          = "${local.service_name}-${local.environment}"
   protocol_type = "HTTP"
-  description   = "AI Shopping Assistant API (Production)"
+  description   = "AI Travel Assistant API (Production)"
   
   cors_configuration {
     allow_origins = var.allowed_origins

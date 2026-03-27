@@ -12,12 +12,11 @@ terraform/
 │   ├── lambda-service/          # Reusable Lambda service module
 │   ├── cicd-pipeline/           # Reusable CI/CD pipeline module
 │   └── api-gateway/             # API Gateway module
-├── environments/
-│   ├── dev/                     # Dev environment
-│   ├── prod/                    # Prod environment
-│   └── pipeline/                # CI/CD pipeline infrastructure
-├── cart-service/                # Cart service infrastructure
-├── product-service/             # Product service infrastructure
+├── agent-service/               # AI Agent service infrastructure
+├── hotel-service/               # Hotel service infrastructure
+├── order-service/               # Order service infrastructure
+├── payment-service/             # Payment service infrastructure
+├── bootstrap/                   # Bootstrap resources (S3, DynamoDB)
 └── shared/                      # Shared resources (S3, IAM, etc.)
 ```
 
@@ -44,25 +43,17 @@ terraform plan
 terraform apply
 ```
 
-### 2. Deploy Cart Service Pipeline
+### 2. Deploy Hotel Service Pipeline
 ```bash
-cd terraform/cart-service/pipeline
+cd terraform/hotel-service/pipeline
 terraform init
 terraform plan -var="github_token=YOUR_TOKEN"
 terraform apply -var="github_token=YOUR_TOKEN"
 ```
 
-### 3. Deploy Cart Service (Dev)
+### 3. Deploy Hotel Service (Dev)
 ```bash
-cd terraform/cart-service/dev
-terraform init
-terraform plan
-terraform apply
-```
-
-### 4. Deploy Cart Service (Prod)
-```bash
-cd terraform/cart-service/prod
+cd terraform/hotel-service/dev
 terraform init
 terraform plan
 terraform apply
@@ -86,7 +77,7 @@ All environments use remote state stored in S3:
 terraform {
   backend "s3" {
     bucket         = "terraform-state-ACCOUNT_ID"
-    key            = "cart-service/dev/terraform.tfstate"
+    key            = "hotel-service/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "terraform-state-lock"
@@ -98,14 +89,14 @@ terraform {
 
 ### Lambda Service Module
 ```hcl
-module "cart_service" {
+module "hotel_service" {
   source = "../../modules/lambda-service"
   
-  service_name = "cart-service"
+  service_name = "hotel-service"
   environment  = "dev"
   
   lambda_functions = {
-    add_cart = {
+    search_hotels = {
       handler     = "app.lambda_handler"
       runtime     = "python3.11"
       memory_size = 512
@@ -114,9 +105,8 @@ module "cart_service" {
   }
   
   dynamodb_tables = {
-    cart_table = {
-      hash_key  = "userId"
-      range_key = "productId"
+    hotels_table = {
+      hash_key  = "hotelId"
     }
   }
 }
@@ -139,7 +129,7 @@ terraform init
 terraform state list
 
 # Import existing resources
-terraform import aws_lambda_function.add_cart cart-service-add-dev
+terraform import aws_lambda_function.search_hotels hotel-service-search-dev
 
 # Refresh state
 terraform refresh

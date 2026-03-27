@@ -1,10 +1,10 @@
-# Shopping Agent Service
+# AI Travel Agent Service
 
 ## Overview
 
-AI-powered shopping assistant using AWS Strands Agents SDK and Bedrock (Claude 3 Sonnet).
+AI-powered travel assistant using AWS Strands Agents SDK and Bedrock (Claude 3 Sonnet).
 
-**Purpose:** Provide conversational shopping experience that orchestrates all microservices.
+**Purpose:** Provide conversational travel planning experience with personalized hotel recommendations.
 
 **Technology Stack:**
 - AWS Strands Agents SDK
@@ -14,39 +14,39 @@ AI-powered shopping assistant using AWS Strands Agents SDK and Bedrock (Claude 3
 
 ## Features
 
-- Natural language product search
-- Conversational cart management
-- Intelligent order creation
-- Order status tracking
+- Natural language hotel search
+- Personalized travel recommendations
+- Complete itinerary generation
 - Context-aware responses
+- Travel purpose detection (romantic, business, family, adventure)
+- Natural language hotel search
 
 ## Architecture
 
 ```
-Customer: "I want to buy a laptop under $1000"
+Customer: "I want a romantic hotel in Bali for 3 nights"
     ↓
 API Gateway: POST /agent
     ↓
 Agent Lambda (Strands + Bedrock)
     ↓
 Tools:
-├─ ProductTools.search_products() → Product Service API
-├─ CartTools.add_to_cart() → Cart Service API
-├─ OrderTools.create_order() → Order Service API
-└─ PaymentTools.get_status() → Payment Service API
+├─ TravelPlannerTools.search_hotels() → Hotel Service API
+├─ TravelPlannerTools.get_recommendations() → AI Analysis
+└─ TravelPlannerTools.create_booking() → Hotel Service API
     ↓
-Response: "I found 2 laptops under $1000..."
+Response: "I found 3 romantic hotels in Bali..."
 ```
 
 ## API Endpoints
 
 ### POST /agent
-Conversational interface for shopping
+Conversational interface for travel planning
 
 **Request:**
 ```json
 {
-  "message": "I want to buy a laptop under $1000",
+  "message": "I want a romantic hotel in Bali for 3 nights",
   "userId": "user123",
   "sessionId": "session-abc" // optional, for context
 }
@@ -55,27 +55,28 @@ Conversational interface for shopping
 **Response:**
 ```json
 {
-  "response": "I found 2 laptops under $1000: 1. Dell Laptop - $899...",
-  "toolsUsed": ["search_products"],
+  "response": "I found 3 romantic hotels in Bali: 1. Ocean View Resort - $180/night...",
+  "toolsUsed": ["search_hotels", "suggest_room_upgrade"],
   "context": {
-    "productsFound": 2,
-    "priceRange": "0-1000"
+    "hotelsFound": 3,
+    "travelPurpose": "romantic",
+    "priceRange": "150-250"
   }
 }
 ```
 
 ## Environment Variables
 
-- `PRODUCT_API_URL` - Product Service API endpoint
-- `CART_API_URL` - Cart Service API endpoint
+- `HOTEL_API_URL` - Hotel Service API endpoint
 - `ORDER_API_URL` - Order Service API endpoint
 - `PAYMENT_API_URL` - Payment Service API endpoint
 - `BEDROCK_MODEL_ID` - Bedrock model (default: anthropic.claude-3-sonnet-20240229-v1:0)
+- `SECRETS_ARN` - AWS Secrets Manager ARN for API configuration
 
 ## Cost
 
 - Lambda: ~$2/month (1M requests free tier)
-- Bedrock: ~$25/month (depends on usage)
+- Bedrock: ~$20-30/month (depends on usage)
   - Input: $3 per 1M tokens
   - Output: $15 per 1M tokens
   - Typical conversation: $0.01-0.05
@@ -94,9 +95,15 @@ terraform apply
 cd ../prod
 terraform init
 terraform apply
-
-# Deploy pipeline
-cd ../pipeline
-terraform init
-terraform apply
 ```
+
+## Tools
+
+### TravelPlannerTools
+- `search_hotels()` - Search hotels by location, dates, preferences
+- `get_hotel_details()` - Get detailed hotel information
+- `create_booking()` - Create hotel reservation
+- `generate_itinerary()` - Create day-by-day travel plan
+- `suggest_extended_stay()` - Offer discounts for longer stays
+- `suggest_premium_features()` - Ocean views, balconies, etc.
+- `suggest_travel_protection()` - Insurance and cancellation coverage

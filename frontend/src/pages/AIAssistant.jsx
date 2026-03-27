@@ -4,7 +4,7 @@ import { API_CONFIG, DEMO_USER_ID } from '../config'
 
 export default function AIAssistant() {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hi! I\'m your AI shopping assistant. I can help you find products, add items to cart, and checkout. What are you looking for today?' }
+    { role: 'assistant', content: 'Hello! I\'m your AI travel assistant. I can help you discover hotels, plan your perfect trip, and make bookings. Where would you like to go?' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -46,78 +46,82 @@ export default function AIAssistant() {
   const getDemoResponse = (query) => {
     const lower = query.toLowerCase()
     
-    // Step 1: Search for laptops under $1000
-    if (lower.includes('laptop') && lower.includes('1000')) {
+    // Step 1: Search for hotels
+    if (lower.includes('paris') || (lower.includes('hotel') && lower.includes('300'))) {
       return {
-        content: `I found 2 laptops under $1000:
+        content: `I found 3 great hotels in Paris under $300:
 
-1. Dell Laptop - $899
-   • 13" display, Intel i7, 16GB RAM
-   • In stock: 15 units
+1. Grand Hotel Paris - $299/night
+   • 5-star luxury with Eiffel Tower views
+   • Available: 5 rooms
    
-2. Lenovo Laptop - $750
-   • 14" display, AMD Ryzen 5, 8GB RAM
-   • In stock: 20 units
+2. Boutique Marais - $189/night
+   • Charming hotel in historic district
+   • Available: 8 rooms
 
-Would you like me to add one to your cart?`,
-        toolsUsed: ['search_products']
+3. Paris Business Suites - $249/night
+   • Modern hotel near La Défense
+   • Available: 12 rooms
+
+Would you like to book one of these?`,
+        toolsUsed: ['search_hotels']
       }
     }
     
-    // Step 2: Add Dell laptop to cart
-    if ((lower.includes('add') || lower.includes('dell')) && lower.includes('laptop')) {
+    // Step 2: Add hotel to trip
+    if ((lower.includes('book') || lower.includes('grand')) && !lower.includes('checkout')) {
       return {
-        content: `✅ Added Dell Laptop ($899) to your cart!
+        content: `✅ Added Grand Hotel Paris to your trip!
 
-Your cart now contains:
-• Dell Laptop x1 - $899
+Your trip includes:
+• Grand Hotel Paris - $299/night x 1 night
 
-Total: $899
+Total: $299
 
-Would you like to proceed to checkout?`,
+Would you like to proceed with booking?`,
         toolsUsed: ['add_to_cart', 'get_cart']
       }
     }
     
-    // Step 3: Create order / checkout
-    if (lower.includes('checkout') || lower.includes('order') || lower.includes('yes')) {
+    // Step 3: Complete booking
+    if (lower.includes('checkout') || lower.includes('confirm') || lower.includes('yes')) {
       return {
-        content: `✅ Order #12345 confirmed!
+        content: `✅ Booking #TRV-12345 confirmed!
 
-Order Details:
-• Dell Laptop x1 - $899
-• Subtotal: $899
-• Tax: $71.92
-• Total: $970.92
+Booking Details:
+• Grand Hotel Paris - $299/night x 1 night
+• Subtotal: $299
+• Tax: $23.92
+• Total: $322.92
 
-Delivery: 3-5 business days
+Check-in: Tomorrow
 Payment: Processed successfully
 
-Thank you for shopping with us! 🎉`,
-        toolsUsed: ['create_order', 'process_payment']
+Confirmation sent to your email. Have a wonderful trip! ✈️`,
+        toolsUsed: ['create_booking', 'process_payment']
       }
     }
     
     // Other queries
-    if (lower.includes('laptop')) {
+    if (lower.includes('hotel') || lower.includes('destination')) {
       return {
-        content: 'I found some great laptops for you! The Dell XPS 13 is available for $999, and the MacBook Pro 14" is $1999. Both are in stock. Would you like me to add one to your cart?',
-        toolsUsed: ['search_products']
+        content: 'I can help you find hotels in Paris, London, New York, Tokyo, and many other destinations! Where would you like to stay?',
+        toolsUsed: ['search_hotels']
       }
-    } else if (lower.includes('phone')) {
+    } else if (lower.includes('itinerary') || lower.includes('plan')) {
       return {
-        content: 'We have excellent phones available! The iPhone 15 Pro is $1099 and the Samsung Galaxy S24 is $899. Which one interests you?',
-        toolsUsed: ['search_products']
+        content: 'I can create a complete travel itinerary for you! Just tell me your destination, travel dates, and interests (culture, food, adventure, etc.).',
+        toolsUsed: ['generate_itinerary']
       }
-    } else if (lower.includes('cart')) {
+    } else if (lower.includes('trip')) {
       return {
-        content: 'Your cart currently has 2 items totaling $1797. Would you like to proceed to checkout?',
+        content: 'Your trip currently has 1 hotel booking totaling $299. Would you like to add more hotels or proceed with booking?',
         toolsUsed: ['get_cart']
       }
     }
     
     return {
-      content: 'I can help you search for products, manage your cart, and checkout. Try asking me about laptops, phones, or other electronics!',
+      content: 'I can help you search for hotels, plan your trip, and make bookings. Try asking me about hotels in Paris, London, or other destinations!',
       toolsUsed: []
     }
   }
@@ -127,8 +131,8 @@ Thank you for shopping with us! 🎉`,
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary to-orange-600 text-white p-6">
-          <h1 className="text-3xl font-bold mb-2">🤖 AI Shopping Assistant</h1>
-          <p className="text-orange-100">Powered by AWS Bedrock (Claude 3) + Strands Agents SDK</p>
+          <h1 className="text-3xl font-bold mb-2">🤖 AI Travel Assistant</h1>
+          <p className="text-orange-100">Your intelligent travel companion for personalized hotel recommendations</p>
         </div>
 
         {/* Chat Messages */}
@@ -170,7 +174,7 @@ Thank you for shopping with us! 🎉`,
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Ask me anything... (e.g., 'Show me laptops under $1000')"
+              placeholder="Ask me anything... (e.g., 'Find me hotels in Paris under $300')"
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               disabled={loading}
             />
@@ -193,14 +197,14 @@ Thank you for shopping with us! 🎉`,
             <div className="flex items-start space-x-2">
               <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
               <div className="flex-1">
-                <p className="font-medium text-gray-900">Search for products</p>
+                <p className="font-medium text-gray-900">Search for hotels</p>
                 <button
-                  onClick={() => setInput('I want to buy a laptop under $1000')}
+                  onClick={() => setInput('Find me hotels in Paris under $300')}
                   className="mt-1 text-sm text-primary hover:text-orange-600 font-medium"
                 >
-                  → "I want to buy a laptop under $1000"
+                  → "Find me hotels in Paris under $300"
                 </button>
-                <p className="text-xs text-gray-500 mt-1">Agent calls: search_products()</p>
+                <p className="text-xs text-gray-500 mt-1">Agent calls: search_hotels()</p>
               </div>
             </div>
           </div>
@@ -209,14 +213,14 @@ Thank you for shopping with us! 🎉`,
             <div className="flex items-start space-x-2">
               <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
               <div className="flex-1">
-                <p className="font-medium text-gray-900">Add to cart</p>
+                <p className="font-medium text-gray-900">Book a hotel</p>
                 <button
-                  onClick={() => setInput('Add the Dell laptop')}
+                  onClick={() => setInput('Book the Grand Hotel Paris')}
                   className="mt-1 text-sm text-primary hover:text-orange-600 font-medium"
                 >
-                  → "Add the Dell laptop"
+                  → "Book the Grand Hotel Paris"
                 </button>
-                <p className="text-xs text-gray-500 mt-1">Agent calls: add_to_cart(), get_cart()</p>
+                <p className="text-xs text-gray-500 mt-1">Agent calls: create_booking(), process_payment()</p>
               </div>
             </div>
           </div>

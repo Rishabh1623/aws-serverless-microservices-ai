@@ -17,68 +17,62 @@ export default function Products() {
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_CONFIG.PRODUCT_API}/products`)
-      setProducts(response.data.products || [])
+      const response = await axios.get(`${API_CONFIG.HOTEL_API}/hotels`)
+      setProducts(response.data.hotels || response.data.products || [])
       setError(null)
     } catch (err) {
-      setError('Failed to load products. Using demo data.')
-      // Generic demo product catalog (no copyright issues)
+      setError('Failed to load hotels. Using demo data.')
+      // Demo hotel data - Generic fictional names for demo purposes
       setProducts([
-        // Laptops
-        { id: 'prod1', name: 'UltraBook Pro 13', price: 999, category: 'Laptops', stock: 15, description: 'Ultra-portable laptop with stunning 13.4" display, Intel Core i7, 16GB RAM' },
-        { id: 'prod2', name: 'ProBook Elite 14', price: 1999, category: 'Laptops', stock: 8, description: 'Professional laptop with advanced chip, 18GB RAM, 512GB SSD' },
-        { id: 'prod3', name: 'FlexBook 360', price: 1299, category: 'Laptops', stock: 12, description: '2-in-1 convertible laptop with 13.5" OLED touchscreen' },
-        { id: 'prod4', name: 'BusinessBook X1', price: 1499, category: 'Laptops', stock: 10, description: 'Business laptop with premium keyboard, Intel Core i7, 16GB RAM' },
-        { id: 'prod5', name: 'GameBook Ultra', price: 1799, category: 'Laptops', stock: 6, description: 'Gaming laptop with RTX graphics, AMD Ryzen 9, 165Hz display' },
-        { id: 'prod6', name: 'SlimBook Air', price: 1099, category: 'Laptops', stock: 14, description: 'Elegant laptop with 13.5" touchscreen, Intel Core i5' },
+        // Paris Hotels
+        { id: 'hotel1', name: 'Le Parisien Luxury Hotel', price: 299, category: 'Paris', stock: 5, description: 'Luxury 5-star hotel in the heart of Paris with Eiffel Tower views', imageUrl: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=400&h=300&fit=crop' },
+        { id: 'hotel2', name: 'Marais Boutique Inn', price: 189, category: 'Paris', stock: 8, description: 'Charming boutique hotel in historic Marais district', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
+        { id: 'hotel3', name: 'Paris Executive Suites', price: 249, category: 'Paris', stock: 12, description: 'Modern business hotel near La Défense with conference facilities', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
         
-        // Smartphones
-        { id: 'prod7', name: 'SmartPhone Pro Max', price: 1099, category: 'Smartphones', stock: 25, description: 'Premium smartphone with titanium design, advanced chip, 48MP camera' },
-        { id: 'prod8', name: 'Galaxy Pro Ultra', price: 1299, category: 'Smartphones', stock: 20, description: 'Flagship phone with stylus, 200MP camera, AI features' },
-        { id: 'prod9', name: 'PixelPhone Pro', price: 999, category: 'Smartphones', stock: 18, description: 'Pure Android experience with best-in-class AI photography' },
-        { id: 'prod10', name: 'SpeedPhone 12', price: 799, category: 'Smartphones', stock: 22, description: 'Flagship phone with latest processor, 120Hz AMOLED display' },
-        { id: 'prod11', name: 'SmartPhone Standard', price: 799, category: 'Smartphones', stock: 30, description: 'Standard flagship with dynamic display, advanced chip' },
-        { id: 'prod12', name: 'FoldPhone Pro', price: 1799, category: 'Smartphones', stock: 8, description: 'Foldable phone with 7.6" main display, multitasking powerhouse' },
+        // London Hotels
+        { id: 'hotel4', name: 'Westminster Palace Hotel', price: 349, category: 'London', stock: 6, description: 'Elegant hotel near Buckingham Palace with afternoon tea service', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
+        { id: 'hotel5', name: 'Thames Riverside Inn', price: 199, category: 'London', stock: 10, description: 'Riverside hotel with stunning Thames and Tower Bridge views', imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop' },
+        { id: 'hotel6', name: 'Covent Garden Plaza', price: 279, category: 'London', stock: 7, description: 'Stylish hotel in vibrant Covent Garden theater district', imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop' },
         
-        // Tablets
-        { id: 'prod13', name: 'TabletPro 12.9"', price: 1299, category: 'Tablets', stock: 12, description: 'Powerful tablet with advanced chip, Retina XDR display' },
-        { id: 'prod14', name: 'TabletAir 10.9"', price: 599, category: 'Tablets', stock: 20, description: 'Versatile tablet with M1 chip, 10.9" display, stylus support' },
-        { id: 'prod15', name: 'AndroidTab S9', price: 799, category: 'Tablets', stock: 15, description: 'Android tablet with stylus, 11" AMOLED display, desktop mode' },
-        { id: 'prod16', name: 'ProTab 2-in-1', price: 999, category: 'Tablets', stock: 10, description: '2-in-1 tablet with Intel Core i5, Windows 11, keyboard compatible' },
+        // New York Hotels
+        { id: 'hotel7', name: 'Manhattan Plaza Hotel', price: 399, category: 'New York', stock: 4, description: 'Iconic luxury hotel in Midtown Manhattan near Times Square', imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop' },
+        { id: 'hotel8', name: 'Brooklyn Heights Inn', price: 229, category: 'New York', stock: 9, description: 'Modern hotel in Brooklyn with Manhattan skyline views', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
+        { id: 'hotel9', name: 'Central Park View Suites', price: 449, category: 'New York', stock: 3, description: 'Premium suites overlooking Central Park', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
         
-        // Audio
-        { id: 'prod17', name: 'NoiseCancel Pro XM5', price: 399, category: 'Audio', stock: 30, description: 'Industry-leading noise cancellation, 30-hour battery, premium sound' },
-        { id: 'prod18', name: 'EarBuds Pro 2', price: 249, category: 'Audio', stock: 40, description: 'Active noise cancellation, spatial audio, USB-C charging' },
-        { id: 'prod19', name: 'QuietSound Ultra', price: 429, category: 'Audio', stock: 25, description: 'Premium headphones with immersive audio, world-class ANC' },
-        { id: 'prod20', name: 'StudioSound Pro', price: 349, category: 'Audio', stock: 28, description: 'Wireless headphones with lossless audio, 40-hour battery' },
-        { id: 'prod21', name: 'TrueWireless Buds Pro', price: 229, category: 'Audio', stock: 35, description: 'True wireless earbuds with intelligent ANC, 360 audio' },
-        { id: 'prod22', name: 'PowerSound Speaker', price: 179, category: 'Audio', stock: 45, description: 'Portable Bluetooth speaker, IP67 waterproof, 20-hour playtime' },
+        // Tokyo Hotels
+        { id: 'hotel10', name: 'Ginza Imperial Hotel', price: 329, category: 'Tokyo', stock: 8, description: 'Traditional Japanese luxury hotel in Ginza district', imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop' },
+        { id: 'hotel11', name: 'Shibuya Sky Hotel', price: 189, category: 'Tokyo', stock: 15, description: 'Contemporary hotel in bustling Shibuya with rooftop bar', imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop' },
+        { id: 'hotel12', name: 'Asakusa Temple Inn', price: 159, category: 'Tokyo', stock: 12, description: 'Traditional ryokan-style hotel near Senso-ji Temple', imageUrl: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=400&h=300&fit=crop' },
         
-        // Smartwatches
-        { id: 'prod23', name: 'SmartWatch Pro 9', price: 429, category: 'Smartwatches', stock: 22, description: 'Advanced health tracking, always-on display, latest chip' },
-        { id: 'prod24', name: 'FitWatch Pro 6', price: 299, category: 'Smartwatches', stock: 18, description: 'Wear OS smartwatch with advanced sleep tracking, AMOLED display' },
-        { id: 'prod25', name: 'SportWatch Elite', price: 699, category: 'Smartwatches', stock: 10, description: 'Premium multisport GPS watch with solar charging, rugged design' },
-        { id: 'prod26', name: 'HealthWatch Pro', price: 249, category: 'Smartwatches', stock: 25, description: 'Health-focused smartwatch with stress management, ECG, SpO2' },
+        // Dubai Hotels
+        { id: 'hotel13', name: 'Marina Bay Luxury Resort', price: 499, category: 'Dubai', stock: 6, description: 'Ultra-luxury hotel with private beach and Arabian Gulf views', imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&h=300&fit=crop' },
+        { id: 'hotel14', name: 'Downtown Dubai Plaza', price: 379, category: 'Dubai', stock: 8, description: 'Modern hotel near Dubai Mall and Burj Khalifa', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
+        { id: 'hotel15', name: 'Palm Island Resort', price: 549, category: 'Dubai', stock: 4, description: 'Exclusive resort on Palm Jumeirah with water park access', imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop' },
         
-        // Cameras
-        { id: 'prod27', name: 'MirrorCam Pro A7', price: 2499, category: 'Cameras', stock: 8, description: 'Full-frame mirrorless camera, 33MP, 4K 60fps video' },
-        { id: 'prod28', name: 'ProCam R6 Mark II', price: 2399, category: 'Cameras', stock: 6, description: 'Professional mirrorless with 24MP, 40fps burst, 6K video' },
-        { id: 'prod29', name: 'ClassicCam X-T5', price: 1699, category: 'Cameras', stock: 10, description: 'APS-C mirrorless with 40MP, classic design, film simulations' },
-        { id: 'prod30', name: 'ActionCam Hero', price: 399, category: 'Cameras', stock: 20, description: 'Action camera with 5.3K video, advanced stabilization, waterproof' },
+        // Barcelona Hotels
+        { id: 'hotel16', name: 'Gothic Quarter Inn', price: 219, category: 'Barcelona', stock: 10, description: 'Historic hotel in medieval Gothic Quarter near Las Ramblas', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
+        { id: 'hotel17', name: 'Sagrada View Suites', price: 269, category: 'Barcelona', stock: 7, description: 'Modern suites with Gaudí architecture views', imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop' },
+        { id: 'hotel18', name: 'Barceloneta Beach Resort', price: 299, category: 'Barcelona', stock: 9, description: 'Beachfront resort with Mediterranean cuisine', imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop' },
         
-        // Gaming
-        { id: 'prod31', name: 'GameStation 5', price: 499, category: 'Gaming', stock: 15, description: 'Next-gen console with 4K gaming, ultra-fast SSD, haptic controller' },
-        { id: 'prod32', name: 'GameBox Series X', price: 499, category: 'Gaming', stock: 12, description: 'Powerful console with 4K 120fps, game subscription, quick resume' },
-        { id: 'prod33', name: 'HybridPlay OLED', price: 349, category: 'Gaming', stock: 25, description: 'Hybrid console with 7" OLED screen, enhanced audio, 64GB storage' },
-        { id: 'prod34', name: 'PortablePlay Deck', price: 649, category: 'Gaming', stock: 10, description: 'Handheld gaming PC with 512GB SSD, runs full PC games' },
-        { id: 'prod35', name: 'VR Headset Pro 3', price: 499, category: 'Gaming', stock: 14, description: 'VR headset with mixed reality, 4K+ display, wireless freedom' },
+        // Singapore Hotels
+        { id: 'hotel19', name: 'Marina Bay Sky Hotel', price: 429, category: 'Singapore', stock: 5, description: 'Iconic hotel with rooftop infinity pool and city views', imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop' },
+        { id: 'hotel20', name: 'Sentosa Island Resort', price: 349, category: 'Singapore', stock: 8, description: 'Tropical resort on Sentosa Island with beach access', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
+        { id: 'hotel21', name: 'Orchard Plaza Hotel', price: 259, category: 'Singapore', stock: 11, description: 'Shopping district hotel on famous Orchard Road', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
         
-        // Accessories
-        { id: 'prod36', name: 'ProMouse Wireless', price: 99, category: 'Accessories', stock: 40, description: 'Premium wireless mouse with 8K DPI, quiet clicks, ergonomic design' },
-        { id: 'prod37', name: 'MechKeyboard Pro', price: 109, category: 'Accessories', stock: 35, description: 'Wireless mechanical keyboard with hot-swappable switches, RGB' },
-        { id: 'prod38', name: 'PowerBank 20K', price: 49, category: 'Accessories', stock: 60, description: 'Portable charger with 20,000mAh capacity, 22.5W fast charging' },
-        { id: 'prod39', name: 'FastDrive SSD 2TB', price: 199, category: 'Accessories', stock: 30, description: 'Rugged portable SSD, IP65 rated, 1050MB/s read speed' },
-        { id: 'prod40', name: 'StreamControl Deck', price: 149, category: 'Accessories', stock: 18, description: 'Content creation controller with 15 LCD keys, customizable actions' },
+        // Rome Hotels
+        { id: 'hotel22', name: 'Colosseum View Inn', price: 289, category: 'Rome', stock: 6, description: 'Historic hotel with ancient Colosseum views', imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop' },
+        { id: 'hotel23', name: 'Vatican City Suites', price: 249, category: 'Rome', stock: 9, description: 'Elegant suites near Vatican City and St. Peter\'s Basilica', imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop' },
+        { id: 'hotel24', name: 'Trastevere Boutique Hotel', price: 199, category: 'Rome', stock: 12, description: 'Charming hotel in bohemian Trastevere neighborhood', imageUrl: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=400&h=300&fit=crop' },
+        
+        // Sydney Hotels
+        { id: 'hotel25', name: 'Sydney Harbour View Hotel', price: 379, category: 'Sydney', stock: 7, description: 'Waterfront hotel with Opera House and Harbour Bridge views', imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop' },
+        { id: 'hotel26', name: 'Bondi Beach Resort', price: 299, category: 'Sydney', stock: 10, description: 'Beachfront resort at famous Bondi Beach', imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop' },
+        { id: 'hotel27', name: 'Darling Harbour Suites', price: 329, category: 'Sydney', stock: 8, description: 'Modern suites in entertainment district', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
+        
+        // Amsterdam Hotels
+        { id: 'hotel28', name: 'Canal House Inn', price: 259, category: 'Amsterdam', stock: 6, description: 'Historic canal house hotel in Jordaan district', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
+        { id: 'hotel29', name: 'Museum Quarter Hotel', price: 229, category: 'Amsterdam', stock: 9, description: 'Boutique hotel near Van Gogh and Rijksmuseum', imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop' },
+        { id: 'hotel30', name: 'Amsterdam Central Plaza', price: 199, category: 'Amsterdam', stock: 13, description: 'Modern hotel near Central Station and Dam Square', imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop' },
       ])
     } finally {
       setLoading(false)
@@ -87,16 +81,16 @@ export default function Products() {
 
   const addToCart = async (product) => {
     try {
-      await axios.post(`${API_CONFIG.CART_API}/cart/add`, {
+      await axios.post(`${API_CONFIG.BOOKING_API}/cart/add`, {
         userId: DEMO_USER_ID,
-        productId: product.id || product.productId,
+        hotelId: product.id || product.hotelId,
         quantity: 1,
         price: product.price,
         name: product.name
       })
-      alert(`✅ ${product.name} added to cart!`)
+      alert(`✅ ${product.name} added to your trip!`)
     } catch (err) {
-      alert('✅ Added to cart (demo mode)')
+      alert('✅ Added to trip (demo mode)')
     }
   }
 
@@ -124,7 +118,7 @@ export default function Products() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">Loading amazing products...</p>
+          <p className="text-xl text-gray-600">Loading amazing hotels...</p>
         </div>
       </div>
     )
@@ -135,8 +129,8 @@ export default function Products() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900 mb-2">Product Catalog</h1>
-          <p className="text-gray-600 text-lg">Discover our curated selection of premium electronics</p>
+          <h1 className="text-5xl font-bold text-gray-900 mb-2">Hotel Search</h1>
+          <p className="text-gray-600 text-lg">Discover amazing hotels for your next adventure</p>
         </div>
         
         {error && (
@@ -159,7 +153,7 @@ export default function Products() {
             <div className="md:col-span-2 relative">
               <input
                 type="text"
-                placeholder="Search products by name, category, or description..."
+                placeholder="Search hotels by destination, name, or description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
@@ -202,7 +196,7 @@ export default function Products() {
         {/* Results Count */}
         <div className="mb-6 flex justify-between items-center">
           <p className="text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredProducts.length}</span> products
+            Showing <span className="font-semibold text-gray-900">{filteredProducts.length}</span> hotels
           </p>
         </div>
 
@@ -222,16 +216,7 @@ export default function Products() {
                 />
               ) : null}
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50" style={{display: product.imageUrl ? 'none' : 'flex'}}>
-                <span className="text-7xl">
-                  {product.category === 'Laptops' ? '💻' : 
-                   product.category === 'Smartphones' ? '📱' : 
-                   product.category === 'Tablets' ? '📱' : 
-                   product.category === 'Audio' ? '🎧' : 
-                   product.category === 'Smartwatches' ? '⌚' : 
-                   product.category === 'Cameras' ? '📷' : 
-                   product.category === 'Gaming' ? '🎮' : 
-                   product.category === 'Accessories' ? '⌨️' : '📦'}
-                </span>
+                <span className="text-7xl">🏨</span>
               </div>
             </div>
             <div className="p-6">
@@ -245,13 +230,13 @@ export default function Products() {
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
               )}
               <div className="flex justify-between items-center mb-4">
-                <p className="text-3xl font-bold text-primary">${product.price}</p>
+                <p className="text-3xl font-bold text-primary">${product.price}<span className="text-sm text-gray-600">/night</span></p>
                 <span className={`text-sm px-3 py-1 rounded-full ${
-                  product.stock > 20 ? 'bg-green-100 text-green-800' : 
+                  product.stock > 10 ? 'bg-green-100 text-green-800' : 
                   product.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 
                   'bg-red-100 text-red-800'
                 }`}>
-                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                  {product.stock > 0 ? `${product.stock} rooms` : 'Fully booked'}
                 </span>
               </div>
               <button
@@ -263,7 +248,7 @@ export default function Products() {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {product.stock > 0 ? '🛒 Add to Cart' : 'Out of Stock'}
+                {product.stock > 0 ? '🏨 Book Now' : 'Fully Booked'}
               </button>
             </div>
           </div>
@@ -273,7 +258,7 @@ export default function Products() {
       {filteredProducts.length === 0 && (
         <div className="text-center py-20 bg-white rounded-xl shadow-md">
           <div className="text-6xl mb-4">🔍</div>
-          <p className="text-gray-600 text-xl mb-2">No products found</p>
+          <p className="text-gray-600 text-xl mb-2">No hotels found</p>
           <p className="text-gray-500">Try adjusting your search or filters</p>
           <button
             onClick={() => {

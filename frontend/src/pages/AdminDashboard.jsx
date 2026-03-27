@@ -112,7 +112,7 @@ System is healthy. Continue monitoring.`
               <option value="cart-service-dev">Cart Service</option>
               <option value="order-service-dev">Order Service</option>
               <option value="payment-service-dev">Payment Service</option>
-              <option value="agent-service-dev">Shopping Agent</option>
+              <option value="agent-service-dev">Travel Agent</option>
             </select>
           </div>
 

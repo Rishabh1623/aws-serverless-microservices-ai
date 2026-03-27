@@ -1,0 +1,6 @@
+{
+  "body": "{\"userId\": \"user123\", \"hotelId\": \"hotel-001\", \"roomId\": \"room-001\", \"checkIn\": \"2024-07-01\", \"checkOut\": \"2024-07-05\", \"guests\": 2, \"guestDetails\": {\"name\": \"John Doe\", \"email\": \"john@example.com\", \"phone\": \"+1234567890\"}}",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

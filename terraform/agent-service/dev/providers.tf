@@ -1,6 +1,6 @@
 provider "aws" {
   region = var.aws_region
-  
+
   default_tags {
     tags = {
       Environment = "dev"
@@ -8,3 +8,5 @@ provider "aws" {
       ManagedBy   = "Terraform"
       Project     = "serverless-microservices"
     }
+  }
+}

@@ -1,24 +1,46 @@
 """
 Create Booking Lambda Handler
 
-Create hotel reservation with availability check.
+Create hotel reservation with availability check using DynamoDB transactions.
+Prevents double-booking and ensures data consistency.
 """
 
 import json
 import os
+import sys
 import boto3
 import uuid
 from datetime import datetime
 from decimal import Decimal
 
+# Add shared libraries to path
+sys.path.append('/opt/python')  # Lambda layer path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'shared', 'python'))
+
+from dynamodb_transactions import (
+    create_booking_with_transaction,
+    TransactionError,
+    check_idempotency,
+    store_idempotency_result
+)
+
 dynamodb = boto3.resource('dynamodb')
+events = boto3.client('events')
 bookings_table = dynamodb.Table(os.environ['BOOKING_TABLE'])
 rooms_table = dynamodb.Table(os.environ.get('ROOM_TABLE', 'rooms'))
+idempotency_table = os.environ.get('IDEMPOTENCY_TABLE', 'idempotency-keys')
+event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
 
 def lambda_handler(event, context):
     """
-    Create hotel booking
+    Create hotel booking with DynamoDB transactions
+    
+    Features:
+    - Atomic booking creation + room availability update
+    - Idempotency (prevents duplicate bookings)
+    - EventBridge event publishing
+    - Race condition prevention
     
     Body:
     {
@@ -28,6 +50,7 @@ def lambda_handler(event, context):
         "checkIn": "2024-06-15",
         "checkOut": "2024-06-20",
         "guests": 2,
+        "idempotencyKey": "unique-request-id",  # Optional
         "specialRequests": "Late check-in",
         "guestDetails": {
             "name": "John Doe",
@@ -39,6 +62,7 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event['body'])
         
+        # Extract fields
         user_id = body['userId']
         hotel_id = body['hotelId']
         room_id = body['roomId']
@@ -48,12 +72,17 @@ def lambda_handler(event, context):
         special_requests = body.get('specialRequests', '')
         guest_details = body.get('guestDetails', {})
         
-        # Check room availability
-        if not check_availability(room_id, check_in, check_out):
+        # Idempotency key (prevents duplicate requests)
+        idempotency_key = body.get('idempotencyKey') or f"{user_id}-{room_id}-{check_in}"
+        
+        # Check if request already processed
+        existing_response = check_idempotency(idempotency_key, idempotency_table)
+        if existing_response:
+            print(f"Duplicate request detected: {idempotency_key}")
             return {
-                'statusCode': 400,
+                'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Room not available for selected dates'})
+                'body': existing_response
             }
         
         # Get room details for pricing
@@ -73,15 +102,18 @@ def lambda_handler(event, context):
         check_out_date = dt.strptime(check_out, '%Y-%m-%d')
         nights = (check_out_date - check_in_date).days
         
+        if nights <= 0:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Invalid dates: check-out must be after check-in'})
+            }
+        
         base_price = float(room.get('basePrice', 100))
         total_price = Decimal(str(base_price * nights))
         
-        # Create booking
-        booking_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
-        
-        booking = {
-            'bookingId': booking_id,
+        # Prepare booking data
+        booking_data = {
             'userId': user_id,
             'hotelId': hotel_id,
             'roomId': room_id,
@@ -89,36 +121,85 @@ def lambda_handler(event, context):
             'checkOut': check_out,
             'guests': guests,
             'totalPrice': total_price,
-            'status': 'confirmed',
             'specialRequests': special_requests,
             'guestDetails': guest_details,
-            'paymentStatus': 'pending',
-            'createdAt': timestamp,
-            'updatedAt': timestamp
+            'idempotencyKey': idempotency_key
         }
         
-        bookings_table.put_item(Item=booking)
+        # Create booking with transaction (atomic operation)
+        result = create_booking_with_transaction(
+            booking_data=booking_data,
+            room_data=room,
+            bookings_table=os.environ['BOOKING_TABLE'],
+            rooms_table=os.environ.get('ROOM_TABLE', 'rooms')
+        )
         
-        # Send confirmation email (would integrate with SES)
-        # send_booking_confirmation(guest_details.get('email'), booking)
+        booking_id = result['bookingId']
+        
+        # Publish event to EventBridge
+        try:
+            events.put_events(
+                Entries=[{
+                    'Source': 'travel.bookings',
+                    'DetailType': 'Booking Created',
+                    'Detail': json.dumps({
+                        'bookingId': booking_id,
+                        'userId': user_id,
+                        'hotelId': hotel_id,
+                        'roomId': room_id,
+                        'checkIn': check_in,
+                        'checkOut': check_out,
+                        'totalPrice': str(total_price),
+                        'guestEmail': guest_details.get('email'),
+                        'event_type': 'booking_created'
+                    }),
+                    'EventBusName': event_bus_name
+                }]
+            )
+            print(f"Published booking event for {booking_id}")
+        except Exception as e:
+            print(f"Error publishing event: {str(e)}")
+            # Don't fail the request if event publishing fails
+        
+        # Prepare response
+        response_body = json.dumps({
+            'message': 'Booking created successfully',
+            'bookingId': booking_id,
+            'status': 'confirmed',
+            'totalPrice': str(total_price),
+            'nights': nights,
+            'createdAt': result['createdAt']
+        })
+        
+        # Store for idempotency
+        store_idempotency_result(idempotency_key, response_body, idempotency_table)
         
         return {
             'statusCode': 201,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({
-                'message': 'Booking created successfully',
-                'booking': booking
-            }, default=str)
+            'body': response_body
         }
         
+    except TransactionError as e:
+        # Transaction failed (room unavailable, etc.)
+        print(f"Transaction error: {str(e)}")
+        return {
+            'statusCode': 409,  # Conflict
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
+    
     except KeyError as e:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Missing required field: {str(e)}'})
         }
+    
     except Exception as e:
         print(f"Error creating booking: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

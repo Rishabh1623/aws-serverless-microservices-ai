@@ -1,23 +1,119 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Hotel Service - SAM Local Testing
+Description: Hotel Service - SAM Template for Local Development
+
+# This template is for LOCAL TESTING ONLY
+# Production deployments use Terraform (terraform/hotel-service/dev/)
 
 Globals:
   Function:
     Runtime: python3.11
     Timeout: 30
+    MemorySize: 512
+    Tracing: Active
     Environment:
       Variables:
-        HOTEL_TABLE: !Ref HotelTable
-        ROOM_TABLE: !Ref RoomTable
-        BOOKING_TABLE: !Ref BookingTable
+        HOTEL_TABLE: !Ref HotelsTable
+        ROOM_TABLE: !Ref RoomsTable
+        BOOKING_TABLE: !Ref BookingsTable
+        IDEMPOTENCY_TABLE: !Ref IdempotencyTable
+        EVENT_BUS_NAME: travel-platform-dev
+        ENVIRONMENT: local
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization'"
+      AllowOrigin: "'*'"
 
 Resources:
-  # DynamoDB Tables
-  HotelTable:
+  # ============================================================================
+  # LAMBDA FUNCTIONS
+  # ============================================================================
+
+  SearchHotelsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hotel-service-search-hotels-local
+      CodeUri: src/search_hotels/
+      Handler: app.lambda_handler
+      Description: Search hotels by location and filters
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref HotelsTable
+      Events:
+        SearchHotels:
+          Type: Api
+          Properties:
+            Path: /hotels
+            Method: GET
+
+  GetHotelFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hotel-service-get-hotel-local
+      CodeUri: src/get_hotel/
+      Handler: app.lambda_handler
+      Description: Get hotel details by ID
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref HotelsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref RoomsTable
+      Events:
+        GetHotel:
+          Type: Api
+          Properties:
+            Path: /hotels/{hotelId}
+            Method: GET
+
+  CreateBookingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hotel-service-create-booking-local
+      CodeUri: src/create_booking/
+      Handler: app.lambda_handler
+      Description: Create hotel booking with transactions
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookingsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RoomsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - EventBridgePutEventsPolicy:
+            EventBusName: travel-platform-dev
+      Events:
+        CreateBooking:
+          Type: Api
+          Properties:
+            Path: /bookings
+            Method: POST
+
+  BookingNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hotel-service-booking-notification-local
+      CodeUri: src/booking_notification/
+      Handler: app.lambda_handler
+      Description: Send booking confirmation emails
+      MemorySize: 256
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref HotelsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BookingsTable
+        - SESBulkTemplatedCrudPolicy:
+            IdentityName: "*"
+
+  # ============================================================================
+  # DYNAMODB TABLES (for local testing)
+  # ============================================================================
+
+  HotelsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: hotels-local
+      TableName: hotel-service-hotels-local
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: hotelId
@@ -26,10 +122,10 @@ Resources:
         - AttributeName: hotelId
           KeyType: HASH
 
-  RoomTable:
+  RoomsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: rooms-local
+      TableName: hotel-service-rooms-local
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: roomId
@@ -47,10 +143,10 @@ Resources:
           Projection:
             ProjectionType: ALL
 
-  BookingTable:
+  BookingsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: bookings-local
+      TableName: hotel-service-bookings-local
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: bookingId
@@ -76,63 +172,34 @@ Resources:
           Projection:
             ProjectionType: ALL
 
-  # Lambda Functions
-  SearchHotelsFunction:
-    Type: AWS::Serverless::Function
+  IdempotencyTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      CodeUri: src/search_hotels/
-      Handler: app.lambda_handler
-      Events:
-        SearchHotels:
-          Type: Api
-          Properties:
-            Path: /hotels
-            Method: get
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref HotelTable
-
-  GetHotelFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/get_hotel/
-      Handler: app.lambda_handler
-      Events:
-        GetHotel:
-          Type: Api
-          Properties:
-            Path: /hotels/{hotelId}
-            Method: get
-      Policies:
-        - DynamoDBReadPolicy:
-            TableName: !Ref HotelTable
-        - DynamoDBReadPolicy:
-            TableName: !Ref RoomTable
-
-  CreateBookingFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/create_booking/
-      Handler: app.lambda_handler
-      Events:
-        CreateBooking:
-          Type: Api
-          Properties:
-            Path: /bookings
-            Method: post
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref BookingTable
-        - DynamoDBReadPolicy:
-            TableName: !Ref RoomTable
+      TableName: hotel-service-idempotency-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: idempotencyKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: idempotencyKey
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
 
 Outputs:
-  HotelApi:
-    Description: "API Gateway endpoint URL for Hotel Service"
+  HotelServiceApi:
+    Description: API Gateway endpoint URL for local testing
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-  HotelTable:
-    Description: "DynamoDB Hotel Table"
-    Value: !Ref HotelTable
-  BookingTable:
-    Description: "DynamoDB Booking Table"
-    Value: !Ref BookingTable
+  
+  SearchHotelsFunction:
+    Description: Search Hotels Lambda Function ARN
+    Value: !GetAtt SearchHotelsFunction.Arn
+  
+  GetHotelFunction:
+    Description: Get Hotel Lambda Function ARN
+    Value: !GetAtt GetHotelFunction.Arn
+  
+  CreateBookingFunction:
+    Description: Create Booking Lambda Function ARN
+    Value: !GetAtt CreateBookingFunction.Arn

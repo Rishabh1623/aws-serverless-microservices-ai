@@ -1,69 +1,82 @@
-}
-  
-  backend "s3" {
-    bucket         = "terraform-state-543927035352"
-    key            = "agent-service/dev/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-state-lock"
-    encrypt        = true
-  }
-}
-
-  }
-}
-
 data "aws_caller_identity" "current" {}
+
+# ============================================================================
+# SECRETS MANAGER
+# ============================================================================
+
+module "secrets" {
+  source = "../../modules/secrets-manager"
+
+  service_name = local.service_name
+  environment  = local.environment
+
+  secrets = {
+    bedrock_config = {
+      description = "Bedrock API configuration"
+      secret_string = jsonencode({
+        model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+        region   = var.aws_region
+      })
+    }
+    api_endpoints = {
+      description = "Microservice API endpoints"
+      secret_string = jsonencode({
+        hotel_api_url   = var.hotel_api_url
+        order_api_url   = var.order_api_url
+        payment_api_url = var.payment_api_url
+      })
+    }
+  }
+}
 
 locals {
   service_name = "agent-service"
   environment  = "dev"
-  
-  # Get API endpoints from other services
-  # These should be outputs from other service deployments
-  product_api_url = var.product_api_url
-  cart_api_url    = var.cart_api_url
+
+  # Get API endpoints from variables
+  hotel_api_url   = var.hotel_api_url
   order_api_url   = var.order_api_url
   payment_api_url = var.payment_api_url
 }
 
 # ============================================================================
-# LAMBDA FUNCTION - SHOPPING AGENT
+# LAMBDA FUNCTION - AI TRAVEL AGENT
 # ============================================================================
 
 resource "aws_lambda_function" "agent" {
   function_name = "${local.service_name}-${local.environment}"
-  description   = "AI Shopping Assistant using Strands Agents SDK and Bedrock"
-  
+  description   = "AI Travel Assistant using Strands Agents SDK and Bedrock"
+
   # Deployment package
   filename         = "${path.module}/../../../agent-service-lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../../agent-service-lambda.zip")
-  
+
   # Runtime configuration
   runtime = "python3.11"
   handler = "app.lambda_handler"
-  
+
   # Resource allocation
-  memory_size = 512  # MB - Strands Agents needs more memory
-  timeout     = 60   # seconds - AI processing can take time
-  
+  memory_size = 512 # MB - Strands Agents needs more memory
+  timeout     = 60  # seconds - AI processing can take time
+
   # Execution role
   role = aws_iam_role.agent_lambda.arn
-  
+
   # Environment variables
   environment {
     variables = {
-      PRODUCT_API_URL  = local.product_api_url
-      CART_API_URL     = local.cart_api_url
+      HOTEL_API_URL    = local.hotel_api_url
       ORDER_API_URL    = local.order_api_url
       PAYMENT_API_URL  = local.payment_api_url
       BEDROCK_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+      SECRETS_ARN      = module.secrets.secret_arns["bedrock_config"]
       LOG_LEVEL        = "INFO"
     }
   }
-  
+
   # Tracing
   tracing_config {
-    mode = "Active"  # Enable X-Ray tracing
+    mode = "Active" # Enable X-Ray tracing
   }
 }
 
@@ -73,7 +86,7 @@ resource "aws_lambda_function" "agent" {
 
 resource "aws_iam_role" "agent_lambda" {
   name = "${local.service_name}-${local.environment}-lambda-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -102,7 +115,7 @@ resource "aws_iam_role_policy_attachment" "lambda_xray" {
 resource "aws_iam_role_policy" "bedrock_access" {
   name = "${local.service_name}-${local.environment}-bedrock-policy"
   role = aws_iam_role.agent_lambda.id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -120,13 +133,19 @@ resource "aws_iam_role_policy" "bedrock_access" {
   })
 }
 
+# Secrets Manager permissions
+resource "aws_iam_role_policy_attachment" "lambda_secrets" {
+  role       = aws_iam_role.agent_lambda.name
+  policy_arn = module.secrets.secrets_read_policy_arn
+}
+
 # ============================================================================
 # CLOUDWATCH LOG GROUP
 # ============================================================================
 
 resource "aws_cloudwatch_log_group" "agent" {
   name              = "/aws/lambda/${aws_lambda_function.agent.function_name}"
-  retention_in_days = 7  # Keep logs for 7 days (cost optimization)
+  retention_in_days = 7 # Keep logs for 7 days (cost optimization)
 }
 
 # ============================================================================
@@ -136,10 +155,10 @@ resource "aws_cloudwatch_log_group" "agent" {
 resource "aws_apigatewayv2_api" "agent" {
   name          = "${local.service_name}-${local.environment}"
   protocol_type = "HTTP"
-  description   = "AI Shopping Assistant API"
-  
+  description   = "AI Travel Assistant API"
+
   cors_configuration {
-    allow_origins = ["*"]  # In production, restrict to your domain
+    allow_origins = ["*"] # In production, restrict to your domain
     allow_methods = ["POST", "OPTIONS"]
     allow_headers = ["content-type", "authorization"]
     max_age       = 300
@@ -151,7 +170,7 @@ resource "aws_apigatewayv2_stage" "agent" {
   api_id      = aws_apigatewayv2_api.agent.id
   name        = "$default"
   auto_deploy = true
-  
+
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gateway.arn
     format = jsonencode({
@@ -165,11 +184,11 @@ resource "aws_apigatewayv2_stage" "agent" {
       responseLength = "$context.responseLength"
     })
   }
-  
+
   # Throttling (cost control + security)
   default_route_settings {
-    throttling_burst_limit = 100   # Max burst
-    throttling_rate_limit  = 50    # Requests per second
+    throttling_burst_limit = 100 # Max burst
+    throttling_rate_limit  = 50  # Requests per second
   }
 }
 
@@ -183,9 +202,9 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 resource "aws_apigatewayv2_integration" "agent" {
   api_id           = aws_apigatewayv2_api.agent.id
   integration_type = "AWS_PROXY"
-  
-  integration_uri    = aws_lambda_function.agent.invoke_arn
-  integration_method = "POST"
+
+  integration_uri        = aws_lambda_function.agent.invoke_arn
+  integration_method     = "POST"
   payload_format_version = "2.0"
 }
 
@@ -216,11 +235,11 @@ resource "aws_cloudwatch_metric_alarm" "agent_errors" {
   evaluation_periods  = 2
   metric_name         = "Errors"
   namespace           = "AWS/Lambda"
-  period              = 300  # 5 minutes
+  period              = 300 # 5 minutes
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "Agent Lambda function error rate is high"
-  
+
   dimensions = {
     FunctionName = aws_lambda_function.agent.function_name
   }
@@ -235,9 +254,9 @@ resource "aws_cloudwatch_metric_alarm" "agent_duration" {
   namespace           = "AWS/Lambda"
   period              = 300
   statistic           = "Average"
-  threshold           = 30000  # 30 seconds
+  threshold           = 30000 # 30 seconds
   alarm_description   = "Agent Lambda function duration is high"
-  
+
   dimensions = {
     FunctionName = aws_lambda_function.agent.function_name
   }
@@ -254,7 +273,7 @@ resource "aws_cloudwatch_metric_alarm" "bedrock_throttles" {
   statistic           = "Sum"
   threshold           = 5
   alarm_description   = "Bedrock API is being throttled"
-  
+
   dimensions = {
     FunctionName = aws_lambda_function.agent.function_name
   }

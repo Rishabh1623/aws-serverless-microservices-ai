@@ -4,11 +4,11 @@ Modern React frontend for the serverless e-commerce platform.
 
 ## Features
 
-- 🛍️ **Product Catalog** - Browse and search products
-- 🛒 **Shopping Cart** - Add/remove items
-- 🤖 **AI Shopping Assistant** - Natural language shopping with AWS Bedrock
+- 🏨 **Hotel Search** - Browse and search hotels
+- 🧳 **Trip Planning** - Add/remove hotels from your trip
+- 🤖 **AI Travel Assistant** - Natural language hotel booking with AWS Bedrock
+- 📋 **Booking History** - View past bookings
 - 📊 **Admin Dashboard** - DevOps troubleshooting with MCP
-- 📦 **Order History** - View past orders
 
 ## Tech Stack
 
@@ -143,7 +143,7 @@ frontend/
 
 ### 4. AI Assistant (`/ai-assistant`)
 - Chat interface
-- Natural language shopping
+- Natural language hotel booking
 - Tool usage display
 
 ### 5. Orders (`/orders`)

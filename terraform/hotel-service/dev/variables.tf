@@ -33,3 +33,15 @@ variable "lambda_timeout" {
   type        = number
   default     = 30
 }
+
+variable "domain_name" {
+  description = "Domain name for SES email sending"
+  type        = string
+  default     = "example.com" # Change to your domain
+}
+
+variable "verified_emails" {
+  description = "List of verified email addresses for SES sandbox testing"
+  type        = list(string)
+  default     = [] # Add test emails like ["test@example.com"]
+}

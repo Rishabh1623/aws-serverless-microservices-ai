@@ -1,0 +1,8 @@
+{
+  "pathParameters": {
+    "hotelId": "hotel-001"
+  },
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
