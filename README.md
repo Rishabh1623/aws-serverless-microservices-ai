@@ -72,6 +72,8 @@ This project demonstrates a **production-grade serverless microservices architec
 └─────────────────────────────────────────────────────────────┘
 ```
 
+
+
 ## ✨ Key Features
 
 ### 🎯 Microservices Architecture
@@ -136,166 +138,99 @@ This project demonstrates a **production-grade serverless microservices architec
 
 ## 🚀 Quick Start
 
-### Option 1: Run Frontend Demo (No AWS Required!)
-
-Perfect for recording demos and showcasing the UI:
+### Option 1: Frontend Demo (No AWS!)
 
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+Open http://localhost:5173 - Full UI with 40 demo products!
 
-**Open http://localhost:5173** - Full UI with demo data!
+### Option 2: Test Locally with SAM CLI
 
-See [FRONTEND_SETUP.md](FRONTEND_SETUP.md) for details.
+**Prerequisites:** Install [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) and [Docker](https://www.docker.com/products/docker-desktop)
 
-### Option 2: Deploy Full Stack to AWS
+```bash
+# Start all services
+bash scripts/start-local-services.sh
 
-**Follow ONE complete guide:**
+# Test
+bash scripts/test-local-services.sh
+```
 
-📖 **[STEP_BY_STEP_COMPLETE_GUIDE.md](STEP_BY_STEP_COMPLETE_GUIDE.md)**
+**Services:**
+- Product: http://localhost:3001
+- Cart: http://localhost:3002
+- Order: http://localhost:3003
+- Payment: http://localhost:3004
 
-This single file contains:
-- EC2 setup
-- Tool installation
-- AWS configuration
-- All 7 microservices deployment
-- Frontend setup
-- Demo recording
-- Troubleshooting
+### Option 3: Deploy to AWS
 
-**Time:** 8-10 hours  
-**Cost:** $1-5 for 3-day demo
+See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
 
 ## 📁 Project Structure
 
 ```
-.
-├── agent-service/              # AI Shopping Assistant
-├── cart-service/               # Shopping Cart Service
-├── order-service/              # Order Management Service
-├── payment-service/            # Payment Processing Service
-├── product-service/            # Product Catalog Service
-├── troubleshooting-agent-service/  # DevOps AI Agent
-├── mcp-servers/
-│   └── aws-observability/      # Unified MCP Server (11 tools)
-├── terraform/
-│   ├── modules/                # Reusable Terraform modules
-│   ├── shared/                 # Shared infrastructure
-│   ├── agent-service/          # Agent infrastructure
-│   │   ├── dev/
-│   │   ├── prod/
-│   │   └── pipeline/
-│   └── [other services]/       # Similar structure
-├── shared/
-│   └── python/                 # Shared Python utilities
-├── COMPLETE_DEPLOYMENT_GUIDE.md
-├── PRODUCTION_READINESS_AUDIT.md
-└── README.md
+serverless-microservices/
+├── frontend/              # React app (Vite + Tailwind)
+├── product-service/       # Product catalog API
+├── cart-service/          # Shopping cart API
+├── order-service/         # Order management API
+├── payment-service/       # Payment processing API
+├── agent-service/         # AI shopping assistant (Bedrock)
+├── troubleshooting-agent/ # DevOps AI agent
+├── mcp-servers/           # Observability tools
+├── terraform/             # Infrastructure as Code
+├── shared/                # Shared Python utilities
+└── scripts/               # Helper scripts
 ```
+
+**Each service has:**
+- `src/` - Lambda function code
+- `tests/` - Unit tests
+- `requirements.txt` - Python dependencies
+- `template.yaml` - SAM template for local testing
 
 ## 💰 Cost Estimation
 
-### Demo (3 days)
-- **Optimized**: ~$0.27 (using Claude Haiku)
-- **Full Featured**: ~$1.06 (using Claude Sonnet)
+**Demo (3 days):** ~$1-5  
+**Monthly:** ~$73-110/month
 
-### Monthly (Full Deployment)
-- **Dev Environment**: ~$73/month
-- **Prod Environment**: ~$110/month
-
-**Cost Breakdown:**
 - Lambda: ~$2/month (free tier eligible)
 - DynamoDB: ~$6/month
 - API Gateway: ~$3.50/month
 - Bedrock (AI): ~$20-30/month
-- Other Services: ~$10/month
-
-**See [COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md) for detailed cost analysis**
 
 ## 📚 Documentation
 
-**Main Guide (Everything in ONE file):**
-- **[STEP_BY_STEP_COMPLETE_GUIDE.md](STEP_BY_STEP_COMPLETE_GUIDE.md)** - Complete deployment from start to finish
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Deploy to AWS
+- [Terraform Structure](terraform/STRUCTURE.md) - Infrastructure organization
+- Service READMEs in each service folder
 
-**Service Documentation:**
-- [Agent Service](agent-service/README.md) - AI Shopping Assistant
-- [Cart Service](cart-service/README.md) - Shopping Cart API
-- [Product Service](product-service/README.md) - Product Catalog API
-- [MCP Server](mcp-servers/aws-observability/README.md) - Observability tools
-- [Troubleshooting Agent](troubleshooting-agent-service/README.md) - DevOps AI
+## 🎥 Demo Examples
 
-## 🎥 Demo
-
-### Shopping Agent Example
+**Shopping Agent:**
 ```bash
 curl -X POST "$AGENT_API/agent" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "I want to buy a laptop under $1000",
-    "userId": "user123"
-  }'
+  -d '{"message": "I want to buy a laptop under $1000", "userId": "user123"}'
 ```
 
-**Response:**
-```json
-{
-  "response": "I found some great laptops for you! The Dell XPS 13 is available for $999...",
-  "toolsUsed": ["search_products", "get_product_details"],
-  "userId": "user123"
-}
-```
-
-### Troubleshooting Agent Example
+**Troubleshooting Agent:**
 ```bash
 curl -X POST "$TROUBLESHOOT_API/troubleshoot" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "Why is the cart service failing?",
-    "service": "cart-service-dev",
-    "timeRange": "1h"
-  }'
+  -d '{"question": "Why is the cart service failing?", "service": "cart-service-dev"}'
 ```
 
-**Response:**
-```json
-{
-  "answer": "I found 3 errors in the cart service logs:\n1. DynamoDB throttling...",
-  "toolsUsed": ["search_errors", "query_logs", "get_dynamodb_table"],
-  "service": "cart-service-dev"
-}
-```
+## 🎓 What This Demonstrates
 
-## 🎓 What This Project Demonstrates
-
-### Technical Skills
-- ✅ AWS Serverless Architecture
-- ✅ Microservices Design Patterns
-- ✅ Infrastructure as Code (Terraform)
-- ✅ AI/ML Integration (Bedrock)
-- ✅ CI/CD Automation
-- ✅ Production-Grade Monitoring
-- ✅ Security Best Practices
-- ✅ Cost Optimization
-
-### Architecture Patterns
-- ✅ Domain-Driven Microservices
-- ✅ Event-Driven Architecture
-- ✅ AI Agent Tool Calling
-- ✅ Model Context Protocol (MCP)
-- ✅ Circuit Breaker Pattern
-- ✅ Graceful Degradation
-- ✅ Retry with Exponential Backoff
-
-### Best Practices
-- ✅ Separate dev/prod environments
-- ✅ Independent service deployment
-- ✅ Comprehensive monitoring
-- ✅ Automated testing
-- ✅ Security by design
-- ✅ Cost controls
-- ✅ Complete documentation
+- AWS Serverless Architecture (Lambda, API Gateway, DynamoDB)
+- Microservices Design Patterns
+- Infrastructure as Code (Terraform)
+- AI/ML Integration (AWS Bedrock)
+- CI/CD Automation
+- Production Monitoring (CloudWatch, X-Ray)
+- Model Context Protocol (MCP)
 
 ## 🤝 Contributing
 
@@ -326,19 +261,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-- **7 Microservices**
-- **15+ Lambda Functions**
-- **5 DynamoDB Tables**
-- **7 API Gateways**
-- **6 CI/CD Pipelines**
-- **5,000+ Lines of Terraform**
-- **3,000+ Lines of Python**
-- **10,000+ Lines of Documentation**
+- 7 Microservices
+- 15+ Lambda Functions
+- 5 DynamoDB Tables
+- 7 API Gateways
+- 6 CI/CD Pipelines
 
 ---
 
-⭐ **Star this repo if you find it helpful!**
+⭐ Star this repo if you find it helpful!
 
-📧 **Questions?** Open an issue or reach out!
-
-🚀 **Ready to deploy?** Check out [COMPLETE_DEPLOYMENT_GUIDE.md](COMPLETE_DEPLOYMENT_GUIDE.md)
+📧 Questions? Open an issue or reach out!

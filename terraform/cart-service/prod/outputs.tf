@@ -1,19 +1,29 @@
 output "api_gateway_url" {
-  description = "Cart Service API Gateway URL"
+  description = "API Gateway endpoint URL"
   value       = module.cart_service.api_gateway_url
 }
 
+output "api_gateway_id" {
+  description = "API Gateway REST API ID"
+  value       = module.cart_service.api_gateway_id
+}
+
 output "lambda_function_names" {
-  description = "Lambda function names"
+  description = "Names of Lambda functions"
   value       = module.cart_service.lambda_function_names
 }
 
+output "lambda_function_arns" {
+  description = "ARNs of Lambda functions"
+  value       = module.cart_service.lambda_function_arns
+}
+
 output "dynamodb_table_names" {
-  description = "DynamoDB table names"
+  description = "Names of DynamoDB tables"
   value       = module.cart_service.dynamodb_table_names
 }
 
-output "api_endpoint_ssm_parameter" {
-  description = "SSM parameter for API endpoint"
-  value       = module.cart_service.api_endpoint_ssm_parameter
+output "dynamodb_table_arns" {
+  description = "ARNs of DynamoDB tables"
+  value       = module.cart_service.dynamodb_table_arns
 }

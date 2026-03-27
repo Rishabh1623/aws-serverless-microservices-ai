@@ -1,12 +1,4 @@
-terraform {
-  required_version = ">= 1.5.0"
-  
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
+}
   
   backend "s3" {
     bucket         = "terraform-state-543927035352"  # Replace with your account ID
@@ -17,16 +9,6 @@ terraform {
   }
 }
 
-provider "aws" {
-  region = var.aws_region
-  
-  default_tags {
-    tags = {
-      Project     = "serverless-microservices"
-      Service     = "cart-service"
-      Environment = "dev"
-      ManagedBy   = "terraform"
-    }
   }
 }
 

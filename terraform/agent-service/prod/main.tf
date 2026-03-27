@@ -1,42 +1,23 @@
-terraform {
-  required_version = ">= 1.5.0"
-  
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-  
-  backend "s3" {
-    bucket         = "terraform-state-543927035352"
-    key            = "agent-service/prod/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-state-lock"
-    encrypt        = true
-  }
-}
+# ============================================================================
+# AGENT SERVICE - PRODUCTION
+# AI Shopping Assistant with AWS Bedrock
+# ============================================================================
 
-provider "aws" {
-  region = var.aws_region
-  
-  default_tags {
-    tags = {
-      Environment = "prod"
-      Service     = "agent-service"
-      ManagedBy   = "Terraform"
-      Project     = "serverless-microservices"
-    }
-  }
-}
+# ============================================================================
+# DATA SOURCES
+# ============================================================================
 
 data "aws_caller_identity" "current" {}
 
+# ============================================================================
+# LOCAL VARIABLES
+# ============================================================================
+
 locals {
-  service_name = "agent-service"
-  environment  = "prod"
+  service_name = var.service_name
+  environment  = var.environment
   
-  # Production API endpoints
+  # API endpoints
   product_api_url = var.product_api_url
   cart_api_url    = var.cart_api_url
   order_api_url   = var.order_api_url
@@ -57,9 +38,9 @@ resource "aws_lambda_function" "agent" {
   runtime = "python3.11"
   handler = "app.lambda_handler"
   
-  # Production resource allocation (higher than dev)
-  memory_size = 1024  # MB - More memory for production
-  timeout     = 60    # seconds
+  # Production resource allocation
+  memory_size = var.lambda_memory_size
+  timeout     = var.lambda_timeout
   
   role = aws_iam_role.agent_lambda.arn
   
@@ -69,9 +50,9 @@ resource "aws_lambda_function" "agent" {
       CART_API_URL     = local.cart_api_url
       ORDER_API_URL    = local.order_api_url
       PAYMENT_API_URL  = local.payment_api_url
-      BEDROCK_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+      BEDROCK_MODEL_ID = var.bedrock_model_id
       LOG_LEVEL        = "INFO"
-      ENVIRONMENT      = "prod"
+      ENVIRONMENT      = local.environment
     }
   }
   
@@ -80,7 +61,7 @@ resource "aws_lambda_function" "agent" {
   }
   
   # Production: Higher concurrency limit
-  reserved_concurrent_executions = 50  # Max 50 concurrent (vs 10 in dev)
+  reserved_concurrent_executions = var.lambda_reserved_concurrency
   
   # Dead letter queue for failed invocations
   dead_letter_config {
@@ -173,7 +154,7 @@ resource "aws_iam_role_policy" "dlq_access" {
 
 resource "aws_cloudwatch_log_group" "agent" {
   name              = "/aws/lambda/${aws_lambda_function.agent.function_name}"
-  retention_in_days = 30  # Keep logs longer in production
+  retention_in_days = var.log_retention_days
 }
 
 # ============================================================================
@@ -186,7 +167,7 @@ resource "aws_apigatewayv2_api" "agent" {
   description   = "AI Shopping Assistant API (Production)"
   
   cors_configuration {
-    allow_origins = var.allowed_origins  # Restrict to your domain in prod
+    allow_origins = var.allowed_origins
     allow_methods = ["POST", "OPTIONS"]
     allow_headers = ["content-type", "authorization"]
     max_age       = 300
@@ -213,16 +194,16 @@ resource "aws_apigatewayv2_stage" "agent" {
     })
   }
   
-  # Production throttling (higher limits)
+  # Production throttling
   default_route_settings {
-    throttling_burst_limit = 500   # Higher burst for production
-    throttling_rate_limit  = 200   # 200 req/sec
+    throttling_burst_limit = var.api_throttle_burst_limit
+    throttling_rate_limit  = var.api_throttle_rate_limit
   }
 }
 
 resource "aws_cloudwatch_log_group" "api_gateway" {
   name              = "/aws/apigateway/${local.service_name}-${local.environment}"
-  retention_in_days = 30
+  retention_in_days = var.log_retention_days
 }
 
 resource "aws_apigatewayv2_integration" "agent" {
@@ -272,7 +253,7 @@ resource "aws_cloudwatch_metric_alarm" "agent_errors" {
   namespace           = "AWS/Lambda"
   period              = 300
   statistic           = "Sum"
-  threshold           = 10
+  threshold           = var.error_threshold
   alarm_description   = "PRODUCTION: Agent Lambda error rate is high"
   alarm_actions       = [aws_sns_topic.agent_alerts.arn]
   
@@ -290,7 +271,7 @@ resource "aws_cloudwatch_metric_alarm" "agent_duration" {
   namespace           = "AWS/Lambda"
   period              = 300
   statistic           = "Average"
-  threshold           = 30000
+  threshold           = var.duration_threshold
   alarm_description   = "PRODUCTION: Agent Lambda duration is high"
   alarm_actions       = [aws_sns_topic.agent_alerts.arn]
   
@@ -344,7 +325,7 @@ resource "aws_cloudwatch_metric_alarm" "bedrock_cost" {
   namespace           = "AWS/Billing"
   period              = 21600  # 6 hours
   statistic           = "Maximum"
-  threshold           = 50  # Alert if daily cost > $50
+  threshold           = var.cost_threshold
   alarm_description   = "PRODUCTION: Bedrock costs are high"
   alarm_actions       = [aws_sns_topic.agent_alerts.arn]
   

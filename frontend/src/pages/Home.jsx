@@ -38,10 +38,10 @@ export default function Home() {
 
         {/* Stats Section */}
         <div className="grid md:grid-cols-4 gap-6 mb-16">
-          <StatCard number="7" label="Microservices" icon="⚡" />
+          <StatCard number="40+" label="Products" icon="📦" />
+          <StatCard number="8" label="Categories" icon="🏷️" />
           <StatCard number="99.9%" label="Uptime SLA" icon="✅" />
           <StatCard number="<100ms" label="API Response" icon="🚀" />
-          <StatCard number="$0.01" label="Per Request" icon="💰" />
         </div>
 
         {/* Architecture Overview */}
@@ -91,7 +91,7 @@ export default function Home() {
           <FeatureCard
             icon="🛍️"
             title="Product Catalog"
-            description="Real-time inventory with smart search and filtering"
+            description="40+ products across 8 categories with real-time inventory"
             link="/products"
             gradient="from-blue-500 to-blue-600"
           />

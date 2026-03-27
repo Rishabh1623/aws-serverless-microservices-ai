@@ -22,14 +22,63 @@ export default function Products() {
       setError(null)
     } catch (err) {
       setError('Failed to load products. Using demo data.')
-      // Demo data for testing without backend
+      // Generic demo product catalog (no copyright issues)
       setProducts([
-        { id: 'prod1', name: 'Dell XPS 13', price: 999, category: 'Laptops', stock: 15, description: 'Ultra-portable laptop with stunning display' },
-        { id: 'prod2', name: 'MacBook Pro 14"', price: 1999, category: 'Laptops', stock: 8, description: 'Professional laptop with M3 Pro chip' },
-        { id: 'prod3', name: 'iPhone 15 Pro', price: 1099, category: 'Phones', stock: 25, description: 'Latest iPhone with titanium design' },
-        { id: 'prod4', name: 'Samsung Galaxy S24', price: 899, category: 'Phones', stock: 20, description: 'Flagship Android phone with AI features' },
-        { id: 'prod5', name: 'Sony WH-1000XM5', price: 399, category: 'Audio', stock: 30, description: 'Industry-leading noise cancellation' },
-        { id: 'prod6', name: 'iPad Pro 12.9"', price: 1299, category: 'Tablets', stock: 12, description: 'Powerful tablet with M2 chip' },
+        // Laptops
+        { id: 'prod1', name: 'UltraBook Pro 13', price: 999, category: 'Laptops', stock: 15, description: 'Ultra-portable laptop with stunning 13.4" display, Intel Core i7, 16GB RAM' },
+        { id: 'prod2', name: 'ProBook Elite 14', price: 1999, category: 'Laptops', stock: 8, description: 'Professional laptop with advanced chip, 18GB RAM, 512GB SSD' },
+        { id: 'prod3', name: 'FlexBook 360', price: 1299, category: 'Laptops', stock: 12, description: '2-in-1 convertible laptop with 13.5" OLED touchscreen' },
+        { id: 'prod4', name: 'BusinessBook X1', price: 1499, category: 'Laptops', stock: 10, description: 'Business laptop with premium keyboard, Intel Core i7, 16GB RAM' },
+        { id: 'prod5', name: 'GameBook Ultra', price: 1799, category: 'Laptops', stock: 6, description: 'Gaming laptop with RTX graphics, AMD Ryzen 9, 165Hz display' },
+        { id: 'prod6', name: 'SlimBook Air', price: 1099, category: 'Laptops', stock: 14, description: 'Elegant laptop with 13.5" touchscreen, Intel Core i5' },
+        
+        // Smartphones
+        { id: 'prod7', name: 'SmartPhone Pro Max', price: 1099, category: 'Smartphones', stock: 25, description: 'Premium smartphone with titanium design, advanced chip, 48MP camera' },
+        { id: 'prod8', name: 'Galaxy Pro Ultra', price: 1299, category: 'Smartphones', stock: 20, description: 'Flagship phone with stylus, 200MP camera, AI features' },
+        { id: 'prod9', name: 'PixelPhone Pro', price: 999, category: 'Smartphones', stock: 18, description: 'Pure Android experience with best-in-class AI photography' },
+        { id: 'prod10', name: 'SpeedPhone 12', price: 799, category: 'Smartphones', stock: 22, description: 'Flagship phone with latest processor, 120Hz AMOLED display' },
+        { id: 'prod11', name: 'SmartPhone Standard', price: 799, category: 'Smartphones', stock: 30, description: 'Standard flagship with dynamic display, advanced chip' },
+        { id: 'prod12', name: 'FoldPhone Pro', price: 1799, category: 'Smartphones', stock: 8, description: 'Foldable phone with 7.6" main display, multitasking powerhouse' },
+        
+        // Tablets
+        { id: 'prod13', name: 'TabletPro 12.9"', price: 1299, category: 'Tablets', stock: 12, description: 'Powerful tablet with advanced chip, Retina XDR display' },
+        { id: 'prod14', name: 'TabletAir 10.9"', price: 599, category: 'Tablets', stock: 20, description: 'Versatile tablet with M1 chip, 10.9" display, stylus support' },
+        { id: 'prod15', name: 'AndroidTab S9', price: 799, category: 'Tablets', stock: 15, description: 'Android tablet with stylus, 11" AMOLED display, desktop mode' },
+        { id: 'prod16', name: 'ProTab 2-in-1', price: 999, category: 'Tablets', stock: 10, description: '2-in-1 tablet with Intel Core i5, Windows 11, keyboard compatible' },
+        
+        // Audio
+        { id: 'prod17', name: 'NoiseCancel Pro XM5', price: 399, category: 'Audio', stock: 30, description: 'Industry-leading noise cancellation, 30-hour battery, premium sound' },
+        { id: 'prod18', name: 'EarBuds Pro 2', price: 249, category: 'Audio', stock: 40, description: 'Active noise cancellation, spatial audio, USB-C charging' },
+        { id: 'prod19', name: 'QuietSound Ultra', price: 429, category: 'Audio', stock: 25, description: 'Premium headphones with immersive audio, world-class ANC' },
+        { id: 'prod20', name: 'StudioSound Pro', price: 349, category: 'Audio', stock: 28, description: 'Wireless headphones with lossless audio, 40-hour battery' },
+        { id: 'prod21', name: 'TrueWireless Buds Pro', price: 229, category: 'Audio', stock: 35, description: 'True wireless earbuds with intelligent ANC, 360 audio' },
+        { id: 'prod22', name: 'PowerSound Speaker', price: 179, category: 'Audio', stock: 45, description: 'Portable Bluetooth speaker, IP67 waterproof, 20-hour playtime' },
+        
+        // Smartwatches
+        { id: 'prod23', name: 'SmartWatch Pro 9', price: 429, category: 'Smartwatches', stock: 22, description: 'Advanced health tracking, always-on display, latest chip' },
+        { id: 'prod24', name: 'FitWatch Pro 6', price: 299, category: 'Smartwatches', stock: 18, description: 'Wear OS smartwatch with advanced sleep tracking, AMOLED display' },
+        { id: 'prod25', name: 'SportWatch Elite', price: 699, category: 'Smartwatches', stock: 10, description: 'Premium multisport GPS watch with solar charging, rugged design' },
+        { id: 'prod26', name: 'HealthWatch Pro', price: 249, category: 'Smartwatches', stock: 25, description: 'Health-focused smartwatch with stress management, ECG, SpO2' },
+        
+        // Cameras
+        { id: 'prod27', name: 'MirrorCam Pro A7', price: 2499, category: 'Cameras', stock: 8, description: 'Full-frame mirrorless camera, 33MP, 4K 60fps video' },
+        { id: 'prod28', name: 'ProCam R6 Mark II', price: 2399, category: 'Cameras', stock: 6, description: 'Professional mirrorless with 24MP, 40fps burst, 6K video' },
+        { id: 'prod29', name: 'ClassicCam X-T5', price: 1699, category: 'Cameras', stock: 10, description: 'APS-C mirrorless with 40MP, classic design, film simulations' },
+        { id: 'prod30', name: 'ActionCam Hero', price: 399, category: 'Cameras', stock: 20, description: 'Action camera with 5.3K video, advanced stabilization, waterproof' },
+        
+        // Gaming
+        { id: 'prod31', name: 'GameStation 5', price: 499, category: 'Gaming', stock: 15, description: 'Next-gen console with 4K gaming, ultra-fast SSD, haptic controller' },
+        { id: 'prod32', name: 'GameBox Series X', price: 499, category: 'Gaming', stock: 12, description: 'Powerful console with 4K 120fps, game subscription, quick resume' },
+        { id: 'prod33', name: 'HybridPlay OLED', price: 349, category: 'Gaming', stock: 25, description: 'Hybrid console with 7" OLED screen, enhanced audio, 64GB storage' },
+        { id: 'prod34', name: 'PortablePlay Deck', price: 649, category: 'Gaming', stock: 10, description: 'Handheld gaming PC with 512GB SSD, runs full PC games' },
+        { id: 'prod35', name: 'VR Headset Pro 3', price: 499, category: 'Gaming', stock: 14, description: 'VR headset with mixed reality, 4K+ display, wireless freedom' },
+        
+        // Accessories
+        { id: 'prod36', name: 'ProMouse Wireless', price: 99, category: 'Accessories', stock: 40, description: 'Premium wireless mouse with 8K DPI, quiet clicks, ergonomic design' },
+        { id: 'prod37', name: 'MechKeyboard Pro', price: 109, category: 'Accessories', stock: 35, description: 'Wireless mechanical keyboard with hot-swappable switches, RGB' },
+        { id: 'prod38', name: 'PowerBank 20K', price: 49, category: 'Accessories', stock: 60, description: 'Portable charger with 20,000mAh capacity, 22.5W fast charging' },
+        { id: 'prod39', name: 'FastDrive SSD 2TB', price: 199, category: 'Accessories', stock: 30, description: 'Rugged portable SSD, IP65 rated, 1050MB/s read speed' },
+        { id: 'prod40', name: 'StreamControl Deck', price: 149, category: 'Accessories', stock: 18, description: 'Content creation controller with 15 LCD keys, customizable actions' },
       ])
     } finally {
       setLoading(false)
@@ -174,10 +223,14 @@ export default function Products() {
               ) : null}
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50" style={{display: product.imageUrl ? 'none' : 'flex'}}>
                 <span className="text-7xl">
-                  {product.category === 'Electronics' || product.category === 'Laptops' ? '💻' : 
-                   product.category === 'Phones' ? '📱' : 
+                  {product.category === 'Laptops' ? '💻' : 
+                   product.category === 'Smartphones' ? '📱' : 
+                   product.category === 'Tablets' ? '📱' : 
                    product.category === 'Audio' ? '🎧' : 
-                   product.category === 'Tablets' ? '📱' : '📦'}
+                   product.category === 'Smartwatches' ? '⌚' : 
+                   product.category === 'Cameras' ? '📷' : 
+                   product.category === 'Gaming' ? '🎮' : 
+                   product.category === 'Accessories' ? '⌨️' : '📦'}
                 </span>
               </div>
             </div>

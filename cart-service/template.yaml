@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cart Service - SAM Local Testing
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    Environment:
+      Variables:
+        CART_TABLE: !Ref CartTable
+        PRODUCT_API_URL: http://host.docker.internal:3001
+
+Resources:
+  # DynamoDB Table
+  CartTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: cart-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: productId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: productId
+          KeyType: RANGE
+
+  # Lambda Functions
+  AddCartFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/add_cart/
+      Handler: app.lambda_handler
+      Events:
+        AddCart:
+          Type: Api
+          Properties:
+            Path: /cart/add
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CartTable
+
+  GetCartFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/get_cart/
+      Handler: app.lambda_handler
+      Events:
+        GetCart:
+          Type: Api
+          Properties:
+            Path: /cart/{userId}
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref CartTable
+
+  RemoveCartFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/remove_cart/
+      Handler: app.lambda_handler
+      Events:
+        RemoveCart:
+          Type: Api
+          Properties:
+            Path: /cart/remove
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CartTable
+
+Outputs:
+  CartApi:
+    Description: "API Gateway endpoint URL for Cart Service"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  CartTable:
+    Description: "DynamoDB Cart Table"
+    Value: !Ref CartTable

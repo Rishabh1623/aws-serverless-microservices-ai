@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Order Service - SAM Local Testing
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    Environment:
+      Variables:
+        ORDER_TABLE: !Ref OrderTable
+
+Resources:
+  # DynamoDB Table
+  OrderTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: orders-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: orderId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: orderId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # Lambda Functions
+  CreateOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/create_order/
+      Handler: app.lambda_handler
+      Events:
+        CreateOrder:
+          Type: Api
+          Properties:
+            Path: /orders
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrderTable
+
+  GetOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/get_order/
+      Handler: app.lambda_handler
+      Events:
+        GetOrder:
+          Type: Api
+          Properties:
+            Path: /orders/{orderId}
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref OrderTable
+
+  ListUserOrdersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/list_user_orders/
+      Handler: app.lambda_handler
+      Events:
+        ListUserOrders:
+          Type: Api
+          Properties:
+            Path: /orders/user/{userId}
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref OrderTable
+
+Outputs:
+  OrderApi:
+    Description: "API Gateway endpoint URL for Order Service"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  OrderTable:
+    Description: "DynamoDB Order Table"
+    Value: !Ref OrderTable

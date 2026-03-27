@@ -1,36 +1,6 @@
-terraform {
-  required_version = ">= 1.5.0"
-  
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-  
-  backend "s3" {
-    bucket         = "terraform-state-543927035352"  # Replace with your account ID
-    key            = "cart-service/prod/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "terraform-state-lock"
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-  
-  default_tags {
-    tags = {
-      Project     = "serverless-microservices"
-      Service     = "cart-service"
-      Environment = "prod"
-      ManagedBy   = "terraform"
-    }
-  }
-}
-
-# Data source for Lambda deployment packages
+# ============================================================================
+# DATA SOURCES - Lambda Deployment Packages
+# ============================================================================
 data "archive_file" "add_cart" {
   type        = "zip"
   source_dir  = "${path.module}/../../../cart-service/src/add_cart"
@@ -49,42 +19,48 @@ data "archive_file" "get_cart" {
   output_path = "${path.module}/lambda_packages/get_cart.zip"
 }
 
-# Cart Service Module
+# ============================================================================
+# CART SERVICE MODULE
+# ============================================================================
+
 module "cart_service" {
   source = "../../modules/lambda-service"
   
-  service_name = "cart-service"
-  environment  = "prod"
+  service_name = var.service_name
+  environment  = var.environment
   
   lambda_functions = {
     add-cart = {
-      filename                = data.archive_file.add_cart.output_path
-      handler                 = "app.lambda_handler"
-      runtime                 = "python3.11"
-      memory_size             = 512
-      timeout                 = 30
-      environment_variables   = {
-        CART_TABLE = "cart-service-cart_table-prod"
+      filename              = data.archive_file.add_cart.output_path
+      handler               = "app.lambda_handler"
+      runtime               = var.lambda_runtime
+      memory_size           = var.lambda_memory_size
+      timeout               = var.lambda_timeout
+      environment_variables = {
+        CART_TABLE  = "${var.service_name}-cart_table-${var.environment}"
+        ENVIRONMENT = var.environment
       }
     }
     remove-cart = {
-      filename                = data.archive_file.remove_cart.output_path
-      handler                 = "app.lambda_handler"
-      runtime                 = "python3.11"
-      memory_size             = 512
-      timeout                 = 30
-      environment_variables   = {
-        CART_TABLE = "cart-service-cart_table-prod"
+      filename              = data.archive_file.remove_cart.output_path
+      handler               = "app.lambda_handler"
+      runtime               = var.lambda_runtime
+      memory_size           = var.lambda_memory_size
+      timeout               = var.lambda_timeout
+      environment_variables = {
+        CART_TABLE  = "${var.service_name}-cart_table-${var.environment}"
+        ENVIRONMENT = var.environment
       }
     }
     get-cart = {
-      filename                = data.archive_file.get_cart.output_path
-      handler                 = "app.lambda_handler"
-      runtime                 = "python3.11"
-      memory_size             = 512
-      timeout                 = 30
-      environment_variables   = {
-        CART_TABLE = "cart-service-cart_table-prod"
+      filename              = data.archive_file.get_cart.output_path
+      handler               = "app.lambda_handler"
+      runtime               = var.lambda_runtime
+      memory_size           = var.lambda_memory_size
+      timeout               = var.lambda_timeout
+      environment_variables = {
+        CART_TABLE  = "${var.service_name}-cart_table-${var.environment}"
+        ENVIRONMENT = var.environment
       }
     }
   }

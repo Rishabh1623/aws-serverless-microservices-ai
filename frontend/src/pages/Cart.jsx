@@ -21,10 +21,11 @@ export default function Cart() {
       // Demo data
       setCart({
         items: [
-          { productId: 'prod1', name: 'Dell XPS 13', price: 999, quantity: 1 },
-          { productId: 'prod5', name: 'Sony WH-1000XM5', price: 399, quantity: 2 },
+          { productId: 'prod1', name: 'UltraBook Pro 13', price: 999, quantity: 1 },
+          { productId: 'prod17', name: 'NoiseCancel Pro XM5', price: 399, quantity: 1 },
+          { productId: 'prod18', name: 'EarBuds Pro 2', price: 249, quantity: 2 },
         ],
-        total: 1797
+        total: 1896
       })
     } finally {
       setLoading(false)
