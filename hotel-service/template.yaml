@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Hotel Service - SAM Local Testing
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    Environment:
+      Variables:
+        HOTEL_TABLE: !Ref HotelTable
+        ROOM_TABLE: !Ref RoomTable
+        BOOKING_TABLE: !Ref BookingTable
+
+Resources:
+  # DynamoDB Tables
+  HotelTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: hotels-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: hotelId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: hotelId
+          KeyType: HASH
+
+  RoomTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: rooms-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: roomId
+          AttributeType: S
+        - AttributeName: hotelId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: roomId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: HotelIdIndex
+          KeySchema:
+            - AttributeName: hotelId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  BookingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: bookings-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: bookingId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: roomId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: bookingId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: RoomIdIndex
+          KeySchema:
+            - AttributeName: roomId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # Lambda Functions
+  SearchHotelsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/search_hotels/
+      Handler: app.lambda_handler
+      Events:
+        SearchHotels:
+          Type: Api
+          Properties:
+            Path: /hotels
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref HotelTable
+
+  GetHotelFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/get_hotel/
+      Handler: app.lambda_handler
+      Events:
+        GetHotel:
+          Type: Api
+          Properties:
+            Path: /hotels/{hotelId}
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref HotelTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref RoomTable
+
+  CreateBookingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/create_booking/
+      Handler: app.lambda_handler
+      Events:
+        CreateBooking:
+          Type: Api
+          Properties:
+            Path: /bookings
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookingTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref RoomTable
+
+Outputs:
+  HotelApi:
+    Description: "API Gateway endpoint URL for Hotel Service"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  HotelTable:
+    Description: "DynamoDB Hotel Table"
+    Value: !Ref HotelTable
+  BookingTable:
+    Description: "DynamoDB Booking Table"
+    Value: !Ref BookingTable

@@ -1,11 +1,11 @@
-# 🚀 AWS Serverless Microservices with AI Agents
+# 🏨 AWS Serverless Travel Platform with AI Travel Planner
 
 [![AWS](https://img.shields.io/badge/AWS-Serverless-orange?logo=amazon-aws)](https://aws.amazon.com/)
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-purple?logo=terraform)](https://www.terraform.io/)
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> Production-grade serverless microservices platform with AI-powered shopping assistant and DevOps troubleshooting agent, built on AWS using Bedrock, Lambda, and the Model Context Protocol (MCP).
+> Production-grade serverless travel booking platform with AI-powered travel planner, personalized recommendations, and dynamic pricing, built on AWS using Bedrock, Lambda, and the Model Context Protocol (MCP).
 
 ## 📋 Table of Contents
 
@@ -22,53 +22,54 @@
 
 ## 🎯 Overview
 
-This project demonstrates a **production-grade serverless microservices architecture** on AWS, featuring:
+This project demonstrates a **production-grade serverless travel booking platform** on AWS, featuring:
 
-- **7 Independent Microservices** with separate CI/CD pipelines
-- **2 AI Agents** powered by AWS Bedrock (Claude 3)
-- **Unified MCP Server** for operational observability
+- **8 Independent Microservices** with separate CI/CD pipelines
+- **AI Travel Planner** powered by AWS Bedrock (Claude 3)
+- **Personalized Recommendations** based on user preferences and travel history
+- **Dynamic Pricing Engine** (occupancy, season, events, advance booking)
 - **Complete Infrastructure as Code** using Terraform
-- **Production Features**: DLQ, CloudWatch Alarms, X-Ray Tracing, SNS Alerts
+- **Production Features**: DLQ, CloudWatch Alarms, X-Ray Tracing, SNS Alerts, State Locking
 
-**Perfect for:** Portfolio projects, learning AWS serverless, interview preparation, production reference architecture
+**Perfect for:** Portfolio projects, learning AWS serverless, travel tech interviews, production reference architecture
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    CLIENT APPLICATIONS                       │
+│                    TRAVEL PLATFORM                           │
 └─────────────────────────────────────────────────────────────┘
                             │
         ┌───────────────────┼───────────────────┐
         │                   │                   │
         ▼                   ▼                   ▼
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   Product    │    │     Cart     │    │    Order     │
+│    Hotel     │    │   Booking    │    │   Payment    │
 │   Service    │◀───│   Service    │◀───│   Service    │
-│              │    │              │    │      │       │
-│ - List       │    │ - Add        │    │ - Create     │
-│ - Get        │    │ - Remove     │    │ - Get        │
-│ - Search     │    │ - Update     │    │ - List       │
-└──────────────┘    └──────────────┘    └──────┬───────┘
-                                               │
-                                               ▼
-                                        ┌──────────────┐
-                                        │   Payment    │
-                                        │   Service    │
-                                        │ - Process    │
-                                        │ - Get        │
-                                        └──────────────┘
+│              │    │              │    │              │
+│ - Search     │    │ - Create     │    │ - Process    │
+│ - Details    │    │ - Manage     │    │ - Verify     │
+│ - Rooms      │    │ - Cancel     │    │ - Refund     │
+└──────────────┘    └──────────────┘    └──────────────┘
+        │
+        ▼
+┌──────────────┐
+│   Dynamic    │
+│   Pricing    │
+│   Engine     │
+└──────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│                      AI AGENTS LAYER                         │
+│                   AI TRAVEL PLANNER                          │
 │                                                              │
-│  ┌────────────────────┐         ┌────────────────────┐     │
-│  │ Shopping Agent     │         │ Troubleshooting    │     │
-│  │ (Bedrock + Strands)│         │ Agent (MCP)        │     │
-│  │                    │         │                    │     │
-│  │ Natural language   │         │ DevOps automation  │     │
-│  │ shopping assistant │         │ using MCP tools    │     │
-│  └────────────────────┘         └────────────────────┘     │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  • Personalized hotel recommendations              │    │
+│  │  • Complete itinerary generation                   │    │
+│  │  • Package deals with discounts                    │    │
+│  │  • Hotel comparison & analysis                     │    │
+│  │  • User preference learning                        │    │
+│  │  • Loyalty rewards (Bronze/Silver/Gold/Platinum)   │    │
+│  └────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -76,17 +77,25 @@ This project demonstrates a **production-grade serverless microservices architec
 
 ## ✨ Key Features
 
-### 🎯 Microservices Architecture
-- **4 Core Services**: Product, Cart, Payment, Order
-- **Independent Deployment**: Each service has its own CI/CD pipeline
-- **Service Isolation**: Separate dev/prod environments
-- **API Gateway**: RESTful APIs with throttling and CORS
+### 🏨 Travel Platform
+- **Hotel Search & Booking**: Search hotels by location, dates, price, amenities
+- **Dynamic Pricing**: Occupancy-based, seasonal, event-driven, early bird discounts
+- **Availability Management**: Real-time room availability with conflict detection
+- **Booking System**: Complete reservation flow with confirmation
 
-### 🤖 AI Integration
-- **Shopping Agent**: Conversational shopping using AWS Bedrock (Claude 3)
-- **Troubleshooting Agent**: AI-powered DevOps assistant
-- **Tool Calling**: Agents interact with microservices via tools
-- **MCP Protocol**: Model Context Protocol for operational AI
+### 🤖 AI Travel Planner
+- **Personalized Recommendations**: Hotels matched to travel purpose and preferences
+- **Complete Itineraries**: Day-by-day travel plans with activities and dining
+- **Package Deals**: Bundled hotel + activities with group discounts
+- **Hotel Comparison**: AI-powered side-by-side analysis
+- **Smart Suggestions**: Context-aware recommendations based on conversation
+
+### 👤 Personalization Engine
+- **User Profiles**: Track preferences, budget, past trips, dietary needs
+- **Loyalty Program**: Bronze/Silver/Gold/Platinum tiers (0-15% discounts)
+- **Conversation Memory**: Remember user preferences across sessions
+- **Intent Detection**: Understand travel purpose (business, romantic, family, adventure)
+- **Preference Learning**: AI learns from user behavior and feedback
 
 ### 🏭 Production-Grade Features
 - ✅ Dead Letter Queues (DLQ)
@@ -96,21 +105,14 @@ This project demonstrates a **production-grade serverless microservices architec
 - ✅ API Gateway Throttling
 - ✅ Reserved Concurrency
 - ✅ Cost Alarms
+- ✅ State Locking (S3 + DynamoDB)
 
 ### 🛠️ Infrastructure as Code
 - **Terraform**: Complete infrastructure automation
 - **Modular Design**: Reusable Terraform modules
 - **State Management**: S3 backend with DynamoDB locking
 - **Multi-Environment**: Separate dev/prod configurations
-
-### 📊 Observability
-- **Unified MCP Server**: 11 observability tools
-  - CloudWatch Logs (4 tools)
-  - CloudWatch Metrics (3 tools)
-  - AWS Services Inspection (4 tools)
-- **Centralized Logging**: CloudWatch Logs with retention
-- **Metrics & Alarms**: Proactive monitoring
-- **Distributed Tracing**: X-Ray for request flow
+- **CI/CD Pipelines**: Automated testing and deployment
 
 ## 🔧 Technologies Used
 

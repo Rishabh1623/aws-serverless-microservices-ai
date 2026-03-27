@@ -13,15 +13,11 @@ terraform {
   }
   
   # Remote backend for state management with locking
-  # Run terraform/bootstrap first to create the S3 bucket and DynamoDB table
   backend "s3" {
-    bucket         = "terraform-state-543927035352"  # Replace with your account ID
-    key            = "cart-service/prod/terraform.tfstate"
+    bucket         = "terraform-state-543927035352"
+    key            = "hotel-service/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "terraform-state-lock"
-    
-    # State locking prevents concurrent operations
-    # DynamoDB stores lock with format: <bucket>/<key>-md5
   }
 }
