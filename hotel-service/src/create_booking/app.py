@@ -33,7 +33,6 @@ idempotency_table = os.environ.get('IDEMPOTENCY_TABLE', 'idempotency-keys')
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
 
-@xray_recorder.capture('create_booking')
 def lambda_handler(event, context):
     """
     Create hotel booking with DynamoDB transactions

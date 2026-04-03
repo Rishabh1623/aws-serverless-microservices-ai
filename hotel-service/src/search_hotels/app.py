@@ -17,7 +17,6 @@ table = dynamodb.Table(os.environ['HOTEL_TABLE'])
 cloudwatch = boto3.client('cloudwatch')
 
 
-@xray_recorder.capture('search_hotels')
 def lambda_handler(event, context):
     """
     Search hotels with filters
