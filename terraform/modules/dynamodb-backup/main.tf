@@ -129,14 +129,59 @@ resource "aws_iam_role" "backup" {
 }
 
 # Attach AWS managed policy for DynamoDB backup
-resource "aws_iam_role_policy_attachment" "backup_dynamodb" {
-  role       = aws_iam_role.backup.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForBackup"
+resource "aws_iam_role_policy" "backup_dynamodb" {
+  name = "${var.service_name}-${var.environment}-backup-policy"
+  role = aws_iam_role.backup.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeTable",
+          "dynamodb:CreateBackup"
+        ]
+        Resource = [
+          for table in var.table_names :
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${table}"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeBackup",
+          "dynamodb:DeleteBackup"
+        ]
+        Resource = [
+          for table in var.table_names :
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${table}/backup/*"
+        ]
+      }
+    ]
+  })
 }
 
-resource "aws_iam_role_policy_attachment" "restore_dynamodb" {
-  role       = aws_iam_role.backup.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForRestores"
+resource "aws_iam_role_policy" "restore_dynamodb" {
+  name = "${var.service_name}-${var.environment}-restore-policy"
+  role = aws_iam_role.backup.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:RestoreTableFromBackup",
+          "dynamodb:RestoreTableToPointInTime"
+        ]
+        Resource = [
+          for table in var.table_names :
+          "arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${table}"
+        ]
+      }
+    ]
+  })
 }
 
 # ============================================================================
