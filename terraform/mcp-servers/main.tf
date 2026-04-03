@@ -1,7 +1,7 @@
 }
   
   backend "s3" {
-    bucket         = "terraform-state-543927035352"
+    bucket         = "terraform-state-600105205879"
     key            = "mcp-servers/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-lock"
