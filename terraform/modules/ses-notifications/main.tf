@@ -26,28 +26,13 @@ variable "verified_emails" {
 }
 
 # ============================================================================
-# SES DOMAIN IDENTITY
-# ============================================================================
-
-resource "aws_ses_domain_identity" "main" {
-  domain = var.domain_name
-}
-
-# Domain verification record
-resource "aws_ses_domain_identity_verification" "main" {
-  domain = aws_ses_domain_identity.main.id
-  
-  depends_on = [aws_ses_domain_identity.main]
-}
-
-# DKIM signing
-resource "aws_ses_domain_dkim" "main" {
-  domain = aws_ses_domain_identity.main.domain
-}
-
-# ============================================================================
 # SES EMAIL IDENTITIES (for testing in sandbox)
 # ============================================================================
+
+# Use email verification instead of domain verification for faster setup
+resource "aws_ses_email_identity" "from_email" {
+  email = "${var.from_email}@${var.domain_name}"
+}
 
 resource "aws_ses_email_identity" "verified" {
   count = length(var.verified_emails)
