@@ -94,41 +94,44 @@ module "cart_service" {
       path_part  = "{userId}"
       parent_key = "cart"
     }
-    cart_items = {
-      path_part  = "items"
-      parent_key = "cart"
+    items = {
+      path_part = "items"
     }
-    cart_item = {
+    items_add = {
+      path_part  = "add"
+      parent_key = "items"
+    }
+    items_id = {
       path_part  = "{itemId}"
-      parent_key = "cart_items"
+      parent_key = "items"
     }
     promo = {
       path_part = "promo"
     }
-    promo_user = {
-      path_part  = "{userId}"
+    promo_apply = {
+      path_part  = "apply"
       parent_key = "promo"
     }
   }
 
   api_gateway_methods = {
-    add_to_cart = {
-      resource_key = "cart_items"
-      http_method  = "POST"
-      lambda_key   = "add-to-cart"
-    }
     get_cart = {
       resource_key = "cart_user"
       http_method  = "GET"
       lambda_key   = "get-cart"
     }
+    add_to_cart = {
+      resource_key = "items_add"
+      http_method  = "POST"
+      lambda_key   = "add-to-cart"
+    }
     remove_from_cart = {
-      resource_key = "cart_item"
+      resource_key = "items_id"
       http_method  = "DELETE"
       lambda_key   = "remove-from-cart"
     }
     apply_promo = {
-      resource_key = "promo_user"
+      resource_key = "promo_apply"
       http_method  = "POST"
       lambda_key   = "apply-promo"
     }
