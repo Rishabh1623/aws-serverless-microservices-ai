@@ -13,37 +13,35 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_CONFIG.ORDER_API}/orders/${DEMO_USER_ID}`)
+      const response = await axios.get(`${API_CONFIG.ORDER_API}/orders/user/${DEMO_USER_ID}`)
       setOrders(response.data.orders || [])
     } catch (err) {
       // Demo data
       setOrders([
         {
-          orderId: 'BKG-12345',
+          orderId: 'ORD-12345',
           userId: DEMO_USER_ID,
           items: [
-            { name: 'Grand Hotel Paris', price: 299, quantity: 3, type: 'nights' },
-            { name: 'Boutique Marais', price: 189, quantity: 2, type: 'nights' }
+            { hotelName: 'Grand Hotel Paris', pricePerNight: 299, nights: 3, totalPrice: 897 },
+            { hotelName: 'Boutique Marais', pricePerNight: 189, nights: 2, totalPrice: 378 }
           ],
-          total: 1275,
+          totalPrice: 1275,
           status: 'completed',
           createdAt: new Date().toISOString(),
-          paymentStatus: 'paid',
-          checkIn: '2024-06-15',
-          checkOut: '2024-06-20'
+          paymentStatus: 'completed',
+          guestDetails: { name: 'Demo User', email: 'demo@example.com' }
         },
         {
-          orderId: 'BKG-12344',
+          orderId: 'ORD-12344',
           userId: DEMO_USER_ID,
           items: [
-            { name: 'Tokyo Imperial Hotel', price: 329, quantity: 4, type: 'nights' }
+            { hotelName: 'Tokyo Imperial Hotel', pricePerNight: 329, nights: 4, totalPrice: 1316 }
           ],
-          total: 1316,
+          totalPrice: 1316,
           status: 'confirmed',
           createdAt: new Date(Date.now() - 86400000).toISOString(),
-          paymentStatus: 'paid',
-          checkIn: '2024-07-10',
-          checkOut: '2024-07-14'
+          paymentStatus: 'completed',
+          guestDetails: { name: 'Demo User', email: 'demo@example.com' }
         }
       ])
     } finally {
@@ -92,7 +90,7 @@ export default function Orders() {
           <div key={order.orderId} className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-semibold">Booking {order.orderId}</h3>
+                <h3 className="text-lg font-semibold">Order {order.orderId}</h3>
                 <p className="text-sm text-gray-600">
                   {new Date(order.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -102,9 +100,9 @@ export default function Orders() {
                     minute: '2-digit'
                   })}
                 </p>
-                {order.checkIn && (
+                {order.guestDetails && (
                   <p className="text-sm text-gray-600 mt-1">
-                    📅 {order.checkIn} to {order.checkOut}
+                    👤 {order.guestDetails.name} • {order.guestDetails.email}
                   </p>
                 )}
               </div>
@@ -120,16 +118,23 @@ export default function Orders() {
               {order.items.map((item, idx) => (
                 <div key={idx} className={`flex justify-between items-center ${idx !== 0 ? 'mt-4 pt-4 border-t' : ''}`}>
                   <div>
-                    <h4 className="font-medium">🏨 {item.name}</h4>
-                    <p className="text-sm text-gray-600">{item.quantity} {item.type || 'nights'} × ${item.price}/{item.type === 'nights' ? 'night' : 'item'}</p>
+                    <h4 className="font-medium">🏨 {item.hotelName || item.name}</h4>
+                    <p className="text-sm text-gray-600">
+                      {item.nights || item.quantity} nights × ${item.pricePerNight || item.price}/night
+                    </p>
+                    {item.checkIn && item.checkOut && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        📅 {item.checkIn} to {item.checkOut}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-semibold">${item.price * item.quantity}</p>
+                  <p className="font-semibold">${(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</p>
                 </div>
               ))}
 
               <div className="mt-6 pt-6 border-t flex justify-between items-center">
                 <span className="text-lg font-semibold">Total:</span>
-                <span className="text-2xl font-bold text-primary">${order.total}</span>
+                <span className="text-2xl font-bold text-primary">${(order.totalPrice || order.total).toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -12,6 +12,11 @@ import boto3
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+# Enable X-Ray tracing
+patch_all()
 
 # Add shared libraries to path
 sys.path.append('/opt/python')  # Lambda layer path
@@ -26,12 +31,14 @@ from dynamodb_transactions import (
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
+cloudwatch = boto3.client('cloudwatch')
 bookings_table = dynamodb.Table(os.environ['BOOKING_TABLE'])
 rooms_table = dynamodb.Table(os.environ.get('ROOM_TABLE', 'rooms'))
 idempotency_table = os.environ.get('IDEMPOTENCY_TABLE', 'idempotency-keys')
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
 
+@xray_recorder.capture('create_booking')
 def lambda_handler(event, context):
     """
     Create hotel booking with DynamoDB transactions
@@ -59,7 +66,10 @@ def lambda_handler(event, context):
         }
     }
     """
+    start_time = datetime.now()
+    
     try:
+        xray_recorder.put_metadata('function', 'create_booking')
         body = json.loads(event['body'])
         
         # Extract fields
@@ -174,15 +184,33 @@ def lambda_handler(event, context):
         # Store for idempotency
         store_idempotency_result(idempotency_key, response_body, idempotency_table)
         
+        # Publish success metrics
+        duration = (datetime.now() - start_time).total_seconds() * 1000
+        publish_booking_metrics('CreateBooking', duration, float(total_price), success=True)
+        
+        # Add trace metadata
+        xray_recorder.put_annotation('booking_id', booking_id)
+        xray_recorder.put_metadata('total_price', str(total_price))
+        xray_recorder.put_metadata('duration_ms', duration)
+        
         return {
             'statusCode': 201,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {
+                'Content-Type': 'application/json', 
+                'Access-Control-Allow-Origin': '*',
+                'X-Response-Time': f'{duration}ms'
+            },
             'body': response_body
         }
         
     except TransactionError as e:
         # Transaction failed (room unavailable, etc.)
         print(f"Transaction error: {str(e)}")
+        
+        xray_recorder.put_annotation('error', True)
+        xray_recorder.put_annotation('error_type', 'TransactionError')
+        publish_booking_metrics('CreateBooking', 0, 0, success=False)
+        
         return {
             'statusCode': 409,  # Conflict
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -190,6 +218,10 @@ def lambda_handler(event, context):
         }
     
     except KeyError as e:
+        xray_recorder.put_annotation('error', True)
+        xray_recorder.put_annotation('error_type', 'ValidationError')
+        publish_booking_metrics('CreateBooking', 0, 0, success=False)
+        
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -200,11 +232,58 @@ def lambda_handler(event, context):
         print(f"Error creating booking: {str(e)}")
         import traceback
         traceback.print_exc()
+        
+        xray_recorder.put_annotation('error', True)
+        xray_recorder.put_metadata('error_message', str(e))
+        publish_booking_metrics('CreateBooking', 0, 0, success=False)
+        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Internal server error'})
         }
+
+
+def publish_booking_metrics(operation: str, duration: float, revenue: float, success: bool = True):
+    """Publish business and operational metrics"""
+    try:
+        metrics = [
+            {
+                'MetricName': 'Duration',
+                'Value': duration,
+                'Unit': 'Milliseconds',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            },
+            {
+                'MetricName': 'BookingCount',
+                'Value': 1 if success else 0,
+                'Unit': 'Count',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            }
+        ]
+        
+        if success and revenue > 0:
+            metrics.append({
+                'MetricName': 'Revenue',
+                'Value': revenue,
+                'Unit': 'None',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            })
+        
+        if not success:
+            metrics.append({
+                'MetricName': 'Errors',
+                'Value': 1,
+                'Unit': 'Count',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            })
+        
+        cloudwatch.put_metric_data(
+            Namespace='TravelPlatform/HotelService',
+            MetricData=metrics
+        )
+    except Exception as e:
+        print(f"Error publishing metrics: {str(e)}")
 
 
 def check_availability(room_id: str, check_in: str, check_out: str) -> bool:

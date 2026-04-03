@@ -39,7 +39,7 @@ Developer B: proceeds safely
 ```bash
 terraform apply
 # Terraform writes lock to DynamoDB:
-# LockID: "terraform-state-543927035352/cart-service/prod/terraform.tfstate-md5"
+# LockID: "terraform-state-543927035352/hotel-service/prod/terraform.tfstate-md5"
 # Info: {"ID":"abc123","Operation":"OperationTypeApply","Who":"user@host","Version":"1.5.0"}
 ```
 
@@ -49,7 +49,7 @@ If another process tries to run:
 Error: Error acquiring the state lock
 Lock Info:
   ID:        abc123
-  Path:      terraform-state-543927035352/cart-service/prod/terraform.tfstate
+  Path:      terraform-state-543927035352/hotel-service/prod/terraform.tfstate
   Operation: OperationTypeApply
   Who:       user@host
   Created:   2024-01-15 10:30:00
@@ -90,7 +90,7 @@ All service terraform.tf files already configured:
 terraform {
   backend "s3" {
     bucket         = "terraform-state-<account-id>"
-    key            = "cart-service/prod/terraform.tfstate"
+    key            = "hotel-service/prod/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "terraform-state-lock"
@@ -102,15 +102,13 @@ terraform {
 
 ```
 S3 Bucket: terraform-state-<account-id>
-├── cart-service/
+├── hotel-service/
 │   ├── dev/terraform.tfstate
 │   ├── prod/terraform.tfstate
 │   └── pipeline/terraform.tfstate
-├── product-service/
+├── agent-service/
 │   ├── dev/terraform.tfstate
 │   └── prod/terraform.tfstate
-├── order-service/
-│   └── dev/terraform.tfstate
 └── shared/terraform.tfstate
 ```
 
@@ -122,14 +120,14 @@ Each service/environment has its own state file with independent locking.
 
 Terminal 1:
 ```bash
-cd terraform/cart-service/prod
+cd terraform/hotel-service/prod
 terraform apply
 # Don't approve yet, leave it waiting
 ```
 
 Terminal 2:
 ```bash
-cd terraform/cart-service/prod
+cd terraform/hotel-service/prod
 terraform apply
 # Should show lock error immediately
 ```
@@ -146,7 +144,7 @@ Output:
   "Items": [
     {
       "LockID": {
-        "S": "terraform-state-543927035352/cart-service/prod/terraform.tfstate-md5"
+        "S": "terraform-state-543927035352/hotel-service/prod/terraform.tfstate-md5"
       },
       "Info": {
         "S": "{\"ID\":\"abc123\",\"Operation\":\"OperationTypeApply\",\"Who\":\"user@host\"}"
@@ -224,7 +222,7 @@ cp terraform.tfstate terraform.tfstate.backup
 terraform init -migrate-state
 
 # 4. Verify state in S3
-aws s3 ls s3://terraform-state-<account-id>/cart-service/prod/
+aws s3 ls s3://terraform-state-<account-id>/hotel-service/prod/
 ```
 
 ## Cleanup (Destroy Everything)
@@ -233,8 +231,8 @@ aws s3 ls s3://terraform-state-<account-id>/cart-service/prod/
 
 ```bash
 # 1. Destroy all services first
-cd terraform/cart-service/prod && terraform destroy
-cd terraform/product-service/prod && terraform destroy
+cd terraform/hotel-service/prod && terraform destroy
+cd terraform/agent-service/prod && terraform destroy
 # ... destroy all services
 
 # 2. Then destroy bootstrap

@@ -9,11 +9,20 @@ import os
 import boto3
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+# Enable X-Ray tracing for AWS SDK calls
+patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['HOTEL_TABLE'])
 
+# CloudWatch Metrics
+cloudwatch = boto3.client('cloudwatch')
 
+
+@xray_recorder.capture('search_hotels')
 def lambda_handler(event, context):
     """
     Search hotels with filters
@@ -29,7 +38,12 @@ def lambda_handler(event, context):
     - amenities: Comma-separated amenities
     - starRating: Minimum star rating
     """
+    start_time = datetime.now()
+    
     try:
+        # Add metadata to X-Ray trace
+        xray_recorder.put_metadata('function', 'search_hotels')
+        xray_recorder.put_annotation('destination', event.get('queryStringParameters', {}).get('destination', 'unknown'))
         params = event.get('queryStringParameters') or {}
         
         destination = params.get('destination')
@@ -88,9 +102,21 @@ def lambda_handler(event, context):
         # Sort by price
         hotels.sort(key=lambda x: x.get('basePricePerNight', 0))
         
+        # Publish custom metrics
+        duration = (datetime.now() - start_time).total_seconds() * 1000
+        publish_metrics('SearchHotels', duration, len(hotels))
+        
+        # Add performance metadata
+        xray_recorder.put_metadata('results_count', len(hotels))
+        xray_recorder.put_metadata('duration_ms', duration)
+        
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {
+                'Content-Type': 'application/json', 
+                'Access-Control-Allow-Origin': '*',
+                'X-Response-Time': f'{duration}ms'
+            },
             'body': json.dumps({
                 'hotels': hotels,
                 'count': len(hotels),
@@ -106,11 +132,54 @@ def lambda_handler(event, context):
         
     except Exception as e:
         print(f"Error searching hotels: {str(e)}")
+        
+        # Record error in X-Ray
+        xray_recorder.put_annotation('error', True)
+        xray_recorder.put_metadata('error_message', str(e))
+        
+        # Publish error metric
+        publish_metrics('SearchHotels', 0, 0, error=True)
+        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Internal server error'})
         }
+
+
+def publish_metrics(operation: str, duration: float, result_count: int, error: bool = False):
+    """Publish custom CloudWatch metrics for operational excellence"""
+    try:
+        metrics = [
+            {
+                'MetricName': 'Duration',
+                'Value': duration,
+                'Unit': 'Milliseconds',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            },
+            {
+                'MetricName': 'ResultCount',
+                'Value': result_count,
+                'Unit': 'Count',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            }
+        ]
+        
+        if error:
+            metrics.append({
+                'MetricName': 'Errors',
+                'Value': 1,
+                'Unit': 'Count',
+                'Dimensions': [{'Name': 'Operation', 'Value': operation}]
+            })
+        
+        cloudwatch.put_metric_data(
+            Namespace='TravelPlatform/HotelService',
+            MetricData=metrics
+        )
+    except Exception as e:
+        print(f"Error publishing metrics: {str(e)}")
+        # Don't fail the request if metrics fail
 
 
 def calculate_dynamic_price(base_price: float, check_in: str, check_out: str) -> float:

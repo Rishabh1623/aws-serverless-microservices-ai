@@ -81,12 +81,14 @@ export default function Products() {
 
   const addToCart = async (product) => {
     try {
-      await axios.post(`${API_CONFIG.BOOKING_API}/cart/add`, {
+      await axios.post(`${API_CONFIG.CART_API}/cart/add`, {
         userId: DEMO_USER_ID,
         hotelId: product.id || product.hotelId,
-        quantity: 1,
-        price: product.price,
-        name: product.name
+        roomId: `room-${product.id}-001`,
+        checkIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        checkOut: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        guests: 2,
+        roomType: 'deluxe'
       })
       alert(`✅ ${product.name} added to your trip!`)
     } catch (err) {

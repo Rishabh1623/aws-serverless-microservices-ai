@@ -28,7 +28,7 @@ A **production-grade serverless travel booking platform** built with AWS microse
 
 ### Key Highlights
 
-- 🏗️ **4 Microservices** - Hotel, Agent, Order, Payment services
+- 🏗️ **5 Core Microservices** - Hotel, Cart, Order, Payment, and Agent services
 - 🤖 **AI Assistant** - Natural language booking with AWS Bedrock
 - ⚡ **Serverless** - Auto-scaling, pay-per-use, 99.9% uptime
 - 🔒 **Production-Ready** - DynamoDB transactions, circuit breakers, monitoring
@@ -63,30 +63,30 @@ A **production-grade serverless travel booking platform** built with AWS microse
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     React Frontend (Vite)                    │
-│              Hotels • Trip Planning • AI Assistant           │
+│         Hotels • Cart • Checkout • Orders • AI Chat          │
 └────────────────────┬────────────────────────────────────────┘
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   API Gateway (HTTP APIs)                    │
-└─────┬──────────┬──────────┬──────────┬──────────────────────┘
-      │          │          │          │
-      ▼          ▼          ▼          ▼
-┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│  Hotel   │ │  Agent   │ │  Order   │ │ Payment  │
-│ Service  │ │ Service  │ │ Service  │ │ Service  │
-│          │ │          │ │          │ │          │
-│ Lambda   │ │ Lambda   │ │ Lambda   │ │ Lambda   │
-│ Python   │ │ Python   │ │ Python   │ │ Python   │
-└────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
-     │            │            │            │
-     ▼            ▼            ▼            ▼
-┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│DynamoDB  │ │  Bedrock │ │DynamoDB  │ │DynamoDB  │
-│ Hotels   │ │ Claude 3 │ │ Orders   │ │Payments  │
-└──────────┘ └──────────┘ └──────────┘ └──────────┘
-     │                          │
-     └──────────┬───────────────┘
+└─────┬──────────┬──────────┬──────────┬──────────┬───────────┘
+      │          │          │          │          │
+      ▼          ▼          ▼          ▼          ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│  Hotel   │ │   Cart   │ │  Order   │ │ Payment  │ │  Agent   │
+│ Service  │ │ Service  │ │ Service  │ │ Service  │ │ Service  │
+│          │ │          │ │          │ │          │ │          │
+│ Lambda   │ │ Lambda   │ │ Lambda   │ │ Lambda   │ │ Lambda   │
+│ Python   │ │ Python   │ │ Python   │ │ Python   │ │ Python   │
+└────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
+     │            │            │            │            │
+     ▼            ▼            ▼            ▼            ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│DynamoDB  │ │DynamoDB  │ │DynamoDB  │ │DynamoDB  │ │ Bedrock  │
+│ Hotels   │ │  Carts   │ │ Orders   │ │Payments  │ │Claude 3  │
+└──────────┘ └──────────┘ └──────────┘ └────┬─────┘ └──────────┘
+     │                          │            │
+     └──────────┬───────────────┴────────────┘
                 ▼
         ┌──────────────┐
         │ EventBridge  │
@@ -102,10 +102,11 @@ A **production-grade serverless travel booking platform** built with AWS microse
 
 ### Microservices
 
-1. **Hotel Service** - Search, details, booking management
-2. **Agent Service** - AI assistant with AWS Bedrock
-3. **Order Service** - Booking orders and history
-4. **Payment Service** - Payment processing and verification
+1. **Hotel Service** - Search, details, availability
+2. **Cart Service** - Shopping cart with 15-min TTL
+3. **Order Service** - Order management and history
+4. **Payment Service** - Stripe payment processing
+5. **Agent Service** - AI assistant with AWS Bedrock
 
 ---
 
@@ -114,9 +115,10 @@ A **production-grade serverless travel booking platform** built with AWS microse
 ### Core Features
 
 - 🏨 **Hotel Search** - Browse 30+ hotels across 10 destinations
+- 🛒 **Shopping Cart** - Add hotels with 15-minute holds
+- 📦 **Order Management** - Complete order lifecycle
+- 💳 **Stripe Payments** - Secure payment processing with refunds
 - 🤖 **AI Travel Assistant** - Natural language booking with Claude 3
-- 📅 **Trip Planning** - Multi-hotel itinerary management
-- 💳 **Secure Payments** - Payment processing with idempotency
 - 📧 **Email Notifications** - Booking confirmations via SES
 - 📊 **Admin Dashboard** - Real-time monitoring and analytics
 
@@ -165,62 +167,34 @@ A **production-grade serverless travel booking platform** built with AWS microse
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-```bash
-# Required
-- AWS Account
-- AWS CLI configured
-- Terraform >= 1.5.0
-- Python >= 3.11
-- Node.js >= 18
-- Docker (for SAM local testing)
-```
-
 ### Quick Start
 
-#### 1. Clone Repository
-
 ```bash
-git clone https://github.com/YOUR_USERNAME/serverless-travel-platform.git
+# 1. Clone repository
+git clone <your-repo>
 cd serverless-travel-platform
+
+# 2. Configure AWS
+aws configure
+
+# 3. Deploy all services
+# See DEPLOY.md for complete step-by-step guide
+
+# 4. Test
+curl $HOTEL_API/hotels?destination=Paris
 ```
 
-#### 2. Local Development (Frontend Only)
+### Complete Deployment Guide
 
-```bash
-cd frontend
-npm install
-npm run dev
-# Open http://localhost:5173
-```
+See **[DEPLOY.md](DEPLOY.md)** for:
+- Prerequisites
+- Step-by-step deployment
+- Testing instructions
+- Troubleshooting
+- Production checklist
 
-#### 3. Local Testing with SAM
-
-```bash
-cd hotel-service
-sam local start-api --port 3001
-```
-
-#### 4. Deploy to AWS
-
-```bash
-# Bootstrap (one-time)
-cd terraform/bootstrap
-terraform init
-terraform apply
-
-# Deploy services
-cd ../hotel-service/dev
-terraform init
-terraform apply
-
-cd ../../agent-service/dev
-terraform init
-terraform apply
-```
-
-See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed instructions.
+**Deployment time**: ~30 minutes
+**Monthly cost**: ~$22 for 10K requests
 
 ---
 
@@ -228,6 +202,33 @@ See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed instructions.
 
 ```
 serverless-travel-platform/
+├── hotel-service/              # Hotel Catalog
+│   ├── src/
+│   │   ├── search_hotels/     # Search Lambda
+│   │   ├── get_hotel/         # Details Lambda
+│   │   └── create_booking/    # Booking Lambda
+│   └── tests/
+├── cart-service/               # Shopping Cart
+│   ├── src/
+│   │   ├── add_to_cart/       # Add item Lambda
+│   │   ├── get_cart/          # Get cart Lambda
+│   │   ├── remove_from_cart/  # Remove item Lambda
+│   │   └── apply_promo/       # Apply promo Lambda
+│   └── README.md
+├── order-service/              # Order Management
+│   ├── src/
+│   │   ├── create_order/      # Create order Lambda
+│   │   ├── get_order/         # Get order Lambda
+│   │   ├── list_user_orders/  # List orders Lambda
+│   │   └── cancel_order/      # Cancel order Lambda
+│   └── README.md
+├── payment-service/            # Payment Processing
+│   ├── src/
+│   │   ├── process_payment/   # Process payment Lambda
+│   │   ├── get_payment/       # Get payment Lambda
+│   │   ├── refund_payment/    # Refund Lambda
+│   │   └── stripe_webhook/    # Stripe webhook Lambda
+│   └── README.md
 ├── agent-service/              # AI Travel Assistant
 │   ├── src/
 │   │   └── agent_handler/
@@ -235,15 +236,6 @@ serverless-travel-platform/
 │   │       ├── tools/         # AI tools
 │   │       └── conversation_manager.py
 │   └── tests/
-├── hotel-service/              # Hotel Management
-│   ├── src/
-│   │   ├── search_hotels/     # Search Lambda
-│   │   ├── get_hotel/         # Details Lambda
-│   │   ├── create_booking/    # Booking Lambda
-│   │   └── booking_notification/
-│   └── template.yaml          # SAM template
-├── order-service/              # Order Management
-├── payment-service/            # Payment Processing
 ├── frontend/                   # React Frontend
 │   ├── src/
 │   │   ├── pages/            # React pages
@@ -253,6 +245,9 @@ serverless-travel-platform/
 ├── terraform/                  # Infrastructure as Code
 │   ├── modules/              # Reusable modules
 │   ├── hotel-service/        # Hotel service infra
+│   ├── cart-service/         # Cart service infra
+│   ├── order-service/        # Order service infra
+│   ├── payment-service/      # Payment service infra
 │   ├── agent-service/        # Agent service infra
 │   └── bootstrap/            # Bootstrap resources
 ├── shared/                     # Shared libraries
@@ -275,9 +270,13 @@ GET /hotels?destination=Paris&checkIn=2024-06-15&checkOut=2024-06-20
 
 # Get hotel details
 GET /hotels/{hotelId}
+```
 
-# Create booking
-POST /bookings
+### Cart Service
+
+```bash
+# Add to cart
+POST /cart/add
 {
   "userId": "user123",
   "hotelId": "hotel-001",
@@ -286,6 +285,48 @@ POST /bookings
   "checkOut": "2024-06-20",
   "guests": 2
 }
+
+# Get cart
+GET /cart/{userId}
+
+# Remove from cart
+DELETE /cart/{userId}/{cartItemId}
+```
+
+### Order Service
+
+```bash
+# Create order
+POST /orders
+{
+  "userId": "user123",
+  "guestDetails": {
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+
+# Get order
+GET /orders/{orderId}
+
+# List user orders
+GET /orders/user/{userId}
+```
+
+### Payment Service
+
+```bash
+# Process payment
+POST /payments
+{
+  "orderId": "order-123",
+  "paymentMethod": "card",
+  "cardToken": "tok_visa",
+  "amount": 1299.99
+}
+
+# Refund payment
+POST /payments/{paymentId}/refund
 ```
 
 ### Agent Service
@@ -374,10 +415,9 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ## 📚 Additional Resources
 
-- [Getting Started Guide](GETTING_STARTED.md)
-- [Architecture Documentation](PROJECT_STRUCTURE.md)
-- [Local Testing Guide](LOCAL_TESTING.md)
-- [Deployment Guide](terraform/README.md)
+- [Complete Deployment Guide](DEPLOY.md) - Step-by-step deployment
+- [Getting Started](GETTING_STARTED.md) - Quick start guide
+- [Project Structure](PROJECT_STRUCTURE.md) - Architecture details
 
 ---
 

@@ -1,6 +1,6 @@
-# Frontend - AWS Serverless Microservices
+# Frontend - AWS Serverless Travel Platform
 
-Modern React frontend for the serverless e-commerce platform.
+Modern React frontend for the serverless travel booking platform.
 
 ## Features
 
@@ -37,9 +37,8 @@ cp .env.example .env
 
 Edit `.env`:
 ```
-VITE_PRODUCT_API=https://your-product-api.execute-api.us-east-1.amazonaws.com
-VITE_CART_API=https://your-cart-api.execute-api.us-east-1.amazonaws.com
-# ... etc
+VITE_HOTEL_API=https://your-hotel-api.execute-api.us-east-1.amazonaws.com
+VITE_AGENT_API=https://your-agent-api.execute-api.us-east-1.amazonaws.com
 ```
 
 ### 3. Run Development Server
@@ -131,25 +130,25 @@ frontend/
 - Feature highlights
 - Tech stack showcase
 
-### 2. Products (`/products`)
-- Product catalog with search
-- Add to cart functionality
-- Real-time inventory
+### 2. Hotels (`/products`)
+- Hotel catalog with search
+- Add to trip functionality
+- Real-time availability
 
-### 3. Cart (`/cart`)
-- View cart items
-- Remove items
-- Checkout
+### 3. Trip Planner (`/cart`)
+- View trip items
+- Remove hotels
+- Complete booking
 
 ### 4. AI Assistant (`/ai-assistant`)
 - Chat interface
 - Natural language hotel booking
 - Tool usage display
 
-### 5. Orders (`/orders`)
-- Order history
-- Order status tracking
-- Payment status
+### 5. Bookings (`/orders`)
+- Booking history
+- Booking status tracking
+- Confirmation details
 
 ### 6. Admin Dashboard (`/admin`)
 - Troubleshooting interface
@@ -179,19 +178,19 @@ Edit `src/config.js`:
 
 ```js
 export const API_CONFIG = {
-  PRODUCT_API: 'your-url',
-  // ...
+  HOTEL_API: 'your-url',
+  AGENT_API: 'your-url',
 }
 ```
 
 ## Demo Recording Tips
 
 1. **Start with Home page** - Shows architecture
-2. **Browse Products** - Show catalog and search
+2. **Browse Hotels** - Show catalog and search
 3. **Use AI Assistant** - Demonstrate natural language
-4. **Check Cart** - Show cart management
+4. **Check Trip Planner** - Show trip management
 5. **Admin Dashboard** - Show troubleshooting
-6. **Orders** - Show order history
+6. **Bookings** - Show booking history
 
 ## Troubleshooting
 

@@ -168,7 +168,7 @@ def tail_logs(
         lines: Number of lines
         
     Example:
-        tail_logs("cart-service", 100)
+        tail_logs("hotel-service", 100)
     """
     try:
         log_group = f"/aws/lambda/{service}"
@@ -255,7 +255,7 @@ def get_alarms(
         state: ALARM, OK, INSUFFICIENT_DATA
         
     Example:
-        get_alarms("cart-service", "ALARM")
+        get_alarms("hotel-service", "ALARM")
     """
     try:
         kwargs = {'StateValue': state}
@@ -282,10 +282,10 @@ def check_service_health(service: str) -> Dict[str, Any]:
     Check overall service health (errors, duration, throttles)
     
     Args:
-        service: Service name (e.g., cart-service-dev)
+        service: Service name (e.g., hotel-service-dev)
         
     Example:
-        check_service_health("cart-service-dev")
+        check_service_health("hotel-service-dev")
     """
     try:
         # Check Lambda errors
@@ -337,7 +337,7 @@ def get_lambda_function(function_name: str) -> Dict[str, Any]:
         function_name: Lambda function name
         
     Example:
-        get_lambda_function("cart-service-dev")
+        get_lambda_function("hotel-service-dev")
     """
     try:
         response = lambda_client.get_function(FunctionName=function_name)
@@ -365,7 +365,7 @@ def get_dynamodb_table(table_name: str) -> Dict[str, Any]:
         table_name: DynamoDB table name
         
     Example:
-        get_dynamodb_table("cart-service-dev")
+        get_dynamodb_table("hotel-service-dev")
     """
     try:
         response = dynamodb_client.describe_table(TableName=table_name)
@@ -398,7 +398,7 @@ def get_pipeline_execution(
         status: Filter by status (Succeeded, Failed, InProgress)
         
     Example:
-        get_pipeline_execution("cart-service-pipeline", "Failed")
+        get_pipeline_execution("hotel-service-pipeline", "Failed")
     """
     try:
         response = codepipeline_client.list_pipeline_executions(

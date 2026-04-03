@@ -9,15 +9,3 @@ variable "hotel_api_url" {
   type        = string
   default     = "https://api.example.com/hotels"
 }
-
-variable "order_api_url" {
-  description = "Order Service API URL"
-  type        = string
-  default     = "https://api.example.com/orders"
-}
-
-variable "payment_api_url" {
-  description = "Payment Service API URL"
-  type        = string
-  default     = "https://api.example.com/payments"
-}

@@ -20,7 +20,7 @@
 
 A **production-grade serverless travel booking platform** built on AWS with:
 
-- **4 Microservices**: Hotel, Agent (AI), Order, Payment
+- **2 Core Microservices**: Hotel and Agent (AI) services
 - **AI Travel Assistant**: Powered by AWS Bedrock (Claude 3)
 - **Event-Driven Architecture**: EventBridge + SNS + SQS
 - **Production Features**: Transactions, idempotency, backups, email notifications
@@ -109,8 +109,6 @@ A **production-grade serverless travel booking platform** built on AWS with:
 |---------|---------|------------|
 | **Hotel Service** | Search hotels, create bookings | Lambda + DynamoDB + EventBridge |
 | **Agent Service** | AI travel assistant | Lambda + Bedrock (Claude 3) |
-| **Order Service** | Manage reservations | Lambda + DynamoDB |
-| **Payment Service** | Process payments | Lambda + DynamoDB |
 
 ### Infrastructure Components
 
@@ -319,9 +317,7 @@ HOTEL_API=$(cd ../../hotel-service/dev && terraform output -raw api_endpoint)
 
 # Create terraform.tfvars
 cat > terraform.tfvars <<EOF
-hotel_api_url   = "$HOTEL_API"
-order_api_url   = "https://api.example.com/orders"   # Will deploy later
-payment_api_url = "https://api.example.com/payments" # Will deploy later
+hotel_api_url = "$HOTEL_API"
 EOF
 
 # Deploy
@@ -342,25 +338,7 @@ terraform output api_endpoint > api_endpoint.txt
 
 **Cost**: ~$20-30/month (Bedrock usage)
 
-### Step 7: Deploy Order Service
-
-```bash
-cd ../../order-service/dev
-
-terraform init
-terraform apply
-```
-
-### Step 8: Deploy Payment Service
-
-```bash
-cd ../../payment-service/dev
-
-terraform init
-terraform apply
-```
-
-### Step 9: Deploy Frontend (Optional)
+### Step 7: Deploy Frontend (Optional)
 
 ```bash
 cd ../../../frontend

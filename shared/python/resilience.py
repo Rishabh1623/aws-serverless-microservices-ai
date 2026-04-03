@@ -255,18 +255,18 @@ def timeout(seconds: int):
 
 
 # Example usage combining patterns
-@circuit_breaker(failure_threshold=3, recovery_timeout=30, name="payment_service")
+@circuit_breaker(failure_threshold=3, recovery_timeout=30, name="hotel_service")
 @retry_with_backoff(max_attempts=3, base_delay=1.0)
 @bulkhead(max_concurrent=10)
-def call_payment_service(order_id: str, amount: float):
+def call_hotel_service(hotel_id: str, check_in: str, check_out: str):
     """
     Example function with all resilience patterns applied
     """
     import requests
     
     response = requests.post(
-        "https://payment-service.example.com/process",
-        json={"orderId": order_id, "amount": amount},
+        "https://hotel-service.example.com/bookings",
+        json={"hotelId": hotel_id, "checkIn": check_in, "checkOut": check_out},
         timeout=10
     )
     

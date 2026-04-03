@@ -15,14 +15,17 @@ export default function Cart() {
   const fetchCart = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_CONFIG.BOOKING_API}/cart/${DEMO_USER_ID}`)
-      setCart(response.data)
+      const response = await axios.get(`${API_CONFIG.CART_API}/cart/${DEMO_USER_ID}`)
+      setCart({
+        items: response.data.items || [],
+        total: response.data.totalPrice || 0
+      })
     } catch (err) {
       // Demo data
       setCart({
         items: [
-          { hotelId: 'hotel1', name: 'Grand Hotel Paris', price: 299, quantity: 3, nights: 3 },
-          { hotelId: 'hotel10', name: 'Tokyo Imperial', price: 329, quantity: 2, nights: 2 },
+          { cartItemId: 'cart1', hotelName: 'Grand Hotel Paris', pricePerNight: 299, nights: 3, totalPrice: 897 },
+          { cartItemId: 'cart2', hotelName: 'Tokyo Imperial', pricePerNight: 329, nights: 2, totalPrice: 658 },
         ],
         total: 1555
       })
@@ -31,32 +34,50 @@ export default function Cart() {
     }
   }
 
-  const removeItem = async (hotelId) => {
+  const removeItem = async (cartItemId) => {
     try {
-      await axios.post(`${API_CONFIG.BOOKING_API}/cart/remove`, {
-        userId: DEMO_USER_ID,
-        hotelId
-      })
+      await axios.delete(`${API_CONFIG.CART_API}/cart/${DEMO_USER_ID}/${cartItemId}`)
       fetchCart()
     } catch (err) {
       alert('Hotel removed (demo mode)')
       setCart(prev => ({
         ...prev,
-        items: prev.items.filter(item => item.hotelId !== hotelId)
+        items: prev.items.filter(item => item.cartItemId !== cartItemId)
       }))
     }
   }
 
   const checkout = async () => {
     try {
-      const response = await axios.post(`${API_CONFIG.ORDER_API}/bookings`, {
+      // Create order
+      const orderResponse = await axios.post(`${API_CONFIG.ORDER_API}/orders`, {
         userId: DEMO_USER_ID,
-        items: cart.items
+        guestDetails: {
+          name: 'Demo User',
+          email: 'demo@example.com',
+          phone: '+1234567890'
+        }
       })
-      alert(`Booking confirmed! Booking ID: ${response.data.bookingId}`)
+      
+      const orderId = orderResponse.data.orderId
+      
+      // Process payment
+      await axios.post(`${API_CONFIG.PAYMENT_API}/payments`, {
+        orderId: orderId,
+        paymentMethod: 'card',
+        cardToken: 'tok_visa',
+        amount: cart.total,
+        currency: 'USD',
+        billingDetails: {
+          name: 'Demo User',
+          email: 'demo@example.com'
+        }
+      })
+      
+      alert(`✅ Booking confirmed! Order ID: ${orderId}`)
       navigate('/orders')
     } catch (err) {
-      alert('Booking confirmed successfully! (demo mode)')
+      alert('✅ Booking confirmed successfully! (demo mode)')
       navigate('/orders')
     }
   }
@@ -105,18 +126,18 @@ export default function Cart() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               {cart.items.map((item, index) => (
-                <div key={item.hotelId} className={`p-6 ${index !== 0 ? 'border-t border-gray-200' : ''} hover:bg-gray-50 transition`}>
+                <div key={item.cartItemId || item.hotelId} className={`p-6 ${index !== 0 ? 'border-t border-gray-200' : ''} hover:bg-gray-50 transition`}>
                   <div className="flex items-center space-x-6">
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
                       <span className="text-4xl">🏨</span>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">{item.name}</h3>
-                      <p className="text-gray-600 mb-2">{item.nights || item.quantity} nights × ${item.price}/night</p>
-                      <p className="text-2xl font-bold text-primary">${(item.price * (item.nights || item.quantity)).toFixed(2)}</p>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">{item.hotelName || item.name}</h3>
+                      <p className="text-gray-600 mb-2">{item.nights} nights × ${item.pricePerNight || item.price}/night</p>
+                      <p className="text-2xl font-bold text-primary">${(item.totalPrice || (item.price * item.nights)).toFixed(2)}</p>
                     </div>
                     <button
-                      onClick={() => removeItem(item.hotelId)}
+                      onClick={() => removeItem(item.cartItemId || item.hotelId)}
                       className="text-red-600 hover:text-red-800 hover:bg-red-50 p-3 rounded-lg transition-all duration-200"
                       title="Remove hotel"
                     >

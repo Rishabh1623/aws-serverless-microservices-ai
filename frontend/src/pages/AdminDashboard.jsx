@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     const lower = q.toLowerCase()
     if (lower.includes('error') || lower.includes('fail')) {
       return `**Issue Summary:**
-Cart service is experiencing intermittent errors (3.2% error rate).
+Hotel service is experiencing intermittent errors (3.2% error rate).
 
 **Root Cause:**
 DynamoDB throttling due to burst traffic exceeding provisioned capacity.
@@ -61,10 +61,10 @@ DynamoDB throttling due to burst traffic exceeding provisioned capacity.
 Configure auto-scaling from the start to handle traffic spikes.`
     } else if (lower.includes('slow') || lower.includes('latency')) {
       return `**Performance Analysis:**
-Order service showing elevated latency (avg 2.3s, p99 5.1s).
+Hotel service showing elevated latency (avg 2.3s, p99 5.1s).
 
 **Root Cause:**
-Cold starts + synchronous calls to 3 downstream services.
+Cold starts + synchronous calls to downstream services.
 
 **Recommendations:**
 1. Implement async processing with SQS
@@ -78,10 +78,8 @@ Latency should drop to <500ms average.`
 All services operational. No critical issues detected.
 
 **Metrics (Last Hour):**
-- Product Service: ✅ 0 errors, 145ms avg latency
-- Cart Service: ✅ 0 errors, 120ms avg latency
-- Order Service: ✅ 0 errors, 230ms avg latency
-- Payment Service: ✅ 0 errors, 180ms avg latency
+- Hotel Service: ✅ 0 errors, 145ms avg latency
+- Agent Service: ✅ 0 errors, 230ms avg latency
 
 **Recommendations:**
 System is healthy. Continue monitoring.`
@@ -108,10 +106,7 @@ System is healthy. Continue monitoring.`
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">All Services</option>
-              <option value="product-service-dev">Product Service</option>
-              <option value="cart-service-dev">Cart Service</option>
-              <option value="order-service-dev">Order Service</option>
-              <option value="payment-service-dev">Payment Service</option>
+              <option value="hotel-service-dev">Hotel Service</option>
               <option value="agent-service-dev">Travel Agent</option>
             </select>
           </div>
@@ -123,7 +118,7 @@ System is healthy. Continue monitoring.`
             <textarea
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="e.g., 'Why is the cart service failing?' or 'Check system health'"
+              placeholder="e.g., 'Why is the hotel service failing?' or 'Check system health'"
               rows={3}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
@@ -161,10 +156,10 @@ System is healthy. Continue monitoring.`
         <h3 className="font-semibold mb-3">Example Questions:</h3>
         <div className="grid md:grid-cols-2 gap-2">
           {[
-            'Why is the cart service failing?',
+            'Why is the hotel service failing?',
             'Check system health for all services',
             'Show me errors in the last hour',
-            'What\'s causing high latency in order service?',
+            'What\'s causing high latency in agent service?',
             'Check DynamoDB table status',
             'Show recent pipeline failures'
           ].map(example => (

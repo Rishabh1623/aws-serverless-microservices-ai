@@ -1,55 +1,65 @@
+"""
+Get Order Lambda Handler
+
+Retrieves order details by order ID.
+"""
+
 import json
 import os
 import boto3
-from boto3.dynamodb.conditions import Attr
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.environ['ORDER_TABLE'])
+orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 
+
+@xray_recorder.capture('get_order')
 def lambda_handler(event, context):
-    """Get order details by ID"""
+    """
+    Get order details
+    
+    GET /orders/{orderId}
+    """
     try:
         order_id = event['pathParameters']['orderId']
         
-        if not order_id:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'orderId is required'})
-            }
+        xray_recorder.put_annotation('order_id', order_id)
         
-        # Since we have a composite key (orderId + userId), we need to scan
-        # In production, consider adding orderId as a GSI for efficient lookups
-        response = table.scan(
-            FilterExpression=Attr('orderId').eq(order_id)
-        )
+        # Get order
+        response = orders_table.get_item(Key={'orderId': order_id})
         
-        items = response.get('Items', [])
-        
-        if not items:
+        if 'Item' not in response:
             return {
                 'statusCode': 404,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Order not found'})
             }
         
+        order = response['Item']
+        
+        # Convert Decimal to float
+        order['totalPrice'] = float(order.get('totalPrice', 0))
+        order['discountAmount'] = float(order.get('discountAmount', 0))
+        
+        for item in order.get('items', []):
+            item['pricePerNight'] = float(item.get('pricePerNight', 0))
+            item['totalPrice'] = float(item.get('totalPrice', 0))
+        
         return {
             'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({
-                'order': items[0]
-            }, default=str)
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps(order, default=str)
         }
         
-    except KeyError as e:
-        return {
-            'statusCode': 400,
-            'body': json.dumps({'error': f'Missing required parameter: {str(e)}'})
-        }
     except Exception as e:
-        print(f"Error retrieving order: {str(e)}")
+        print(f"Error getting order: {str(e)}")
+        xray_recorder.put_annotation('error', True)
+        
         return {
             'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Internal server error'})
         }

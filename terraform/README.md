@@ -14,8 +14,6 @@ terraform/
 │   └── api-gateway/             # API Gateway module
 ├── agent-service/               # AI Agent service infrastructure
 ├── hotel-service/               # Hotel service infrastructure
-├── order-service/               # Order service infrastructure
-├── payment-service/             # Payment service infrastructure
 ├── bootstrap/                   # Bootstrap resources (S3, DynamoDB)
 └── shared/                      # Shared resources (S3, IAM, etc.)
 ```

@@ -12,7 +12,7 @@ phases:
   pre_build:
     commands:
       - echo "Initializing Terraform..."
-      - cd terraform/cart-service/prod
+      - cd terraform/hotel-service/prod
       - terraform init -backend-config="bucket=terraform-state-${AWS_ACCOUNT_ID}"
 
   build:
@@ -22,5 +22,5 @@ phases:
 
 artifacts:
   files:
-    - terraform/cart-service/prod/tfplan
+    - terraform/hotel-service/prod/tfplan
   name: terraform-plan-prod

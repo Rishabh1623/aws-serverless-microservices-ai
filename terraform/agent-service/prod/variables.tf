@@ -23,18 +23,6 @@ variable "hotel_api_url" {
   default     = "https://api.example.com/hotels"
 }
 
-variable "order_api_url" {
-  description = "Order service API URL"
-  type        = string
-  default     = "https://api.example.com/orders"
-}
-
-variable "payment_api_url" {
-  description = "Payment service API URL"
-  type        = string
-  default     = "https://api.example.com/payments"
-}
-
 # Lambda Configuration
 variable "lambda_memory_size" {
   description = "Lambda memory size in MB"

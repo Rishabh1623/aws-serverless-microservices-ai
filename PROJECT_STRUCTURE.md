@@ -24,39 +24,24 @@ serverless-microservices/
 │   │   ├── requirements.txt
 │   │   └── README.md
 │   │
-│   ├── agent-service/               # AI Travel Assistant
-│   │   ├── src/agent_handler/
-│   │   │   ├── app.py               # Main agent logic
-│   │   │   ├── conversation_manager.py
-│   │   │   └── tools/
-│   │   │       └── travel_planner_tools.py  # Hotel search, recommendations
-│   │   ├── tests/
-│   │   ├── requirements.txt
-│   │   └── README.md
-│   │
-│   ├── order-service/               # Order management
-│   │   ├── src/
-│   │   │   ├── create_order/
-│   │   │   ├── get_order/
-│   │   │   └── list_user_orders/
-│   │   ├── requirements.txt
-│   │   └── template.yaml
-│   │
-│   └── payment-service/             # Payment processing
-│       ├── src/
-│       │   ├── process_payment/
-│       │   └── get_payment/
+│   └── agent-service/               # AI Travel Assistant
+│       ├── src/agent_handler/
+│       │   ├── app.py               # Main agent logic
+│       │   ├── conversation_manager.py
+│       │   └── tools/
+│       │       └── travel_planner_tools.py  # Hotel search, recommendations
+│       ├── tests/
 │       ├── requirements.txt
-│       └── template.yaml
+│       └── README.md
 │
 ├── 🎨 Frontend
 │   ├── frontend/                    # React UI (Vite + Tailwind)
 │   │   ├── src/
 │   │   │   ├── pages/
 │   │   │   │   ├── Home.jsx
-│   │   │   │   ├── Products.jsx     # Hotel listings
-│   │   │   │   ├── Cart.jsx         # Booking cart
-│   │   │   │   ├── Orders.jsx       # Order history
+│   │   │   │   ├── Hotels.jsx       # Hotel listings
+│   │   │   │   ├── TripPlanner.jsx  # Trip planning
+│   │   │   │   ├── Bookings.jsx     # Booking history
 │   │   │   │   ├── AIAssistant.jsx  # AI chat interface
 │   │   │   │   └── AdminDashboard.jsx
 │   │   │   ├── components/
@@ -86,7 +71,7 @@ serverless-microservices/
 │   │   │   ├── monitoring-dashboard/
 │   │   │   └── cicd-pipeline/
 │   │   │
-│   │   ├── hotel-service/           # Hotel service infrastructure
+│   │   ├── hotel-service/        # Hotel service infra
 │   │   │   ├── dev/
 │   │   │   │   ├── main.tf          # All production modules integrated
 │   │   │   │   ├── variables.tf
@@ -101,12 +86,6 @@ serverless-microservices/
 │   │   │   ├── dev/
 │   │   │   ├── prod/
 │   │   │   └── pipeline/
-│   │   │
-│   │   ├── order-service/           # Order service infrastructure
-│   │   │   └── dev/
-│   │   │
-│   │   ├── payment-service/         # Payment service infrastructure
-│   │   │   └── dev/
 │   │   │
 │   │   ├── mcp-servers/             # MCP observability server
 │   │   │   └── main.tf
@@ -171,22 +150,6 @@ serverless-microservices/
 - ✅ X-Ray distributed tracing
 - ✅ CloudWatch alarms
 
-### Order Service
-**Purpose**: Order management and tracking  
-**Tech**: Lambda + DynamoDB  
-**Features**:
-- Create orders
-- Get order details
-- List user orders
-
-### Payment Service
-**Purpose**: Payment processing  
-**Tech**: Lambda + DynamoDB  
-**Features**:
-- Process payments
-- Get payment status
-- Handle refunds
-
 ## Key Files
 
 ### Documentation
@@ -221,25 +184,22 @@ serverless-microservices/
 1. **Bootstrap** - Terraform state backend
 2. **Hotel Service** - Core booking functionality
 3. **Agent Service** - AI assistant
-4. **Order Service** - Order management
-5. **Payment Service** - Payment processing
-6. **Frontend** - React UI (optional)
+4. **Frontend** - React UI (optional)
 
 ## File Count Summary
 
-- **Services**: 4 (hotel, agent, order, payment)
-- **Lambda Functions**: 10+
+- **Services**: 2 (hotel, agent)
+- **Lambda Functions**: 5
 - **Terraform Modules**: 13
-- **DynamoDB Tables**: 6
-- **API Gateways**: 4
-- **Documentation Files**: 3
+- **DynamoDB Tables**: 4
+- **API Gateways**: 2
+- **Documentation Files**: 5+
 
 ## What's NOT Included
 
-❌ Cart service (legacy e-commerce)  
-❌ Product service (legacy e-commerce)  
-❌ Shopping-related code  
-❌ E-commerce examples  
+❌ Legacy e-commerce code  
+❌ Shopping cart functionality  
+❌ Product catalog (replaced with hotel search)  
 
 ## What IS Included
 
