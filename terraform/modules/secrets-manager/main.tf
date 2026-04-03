@@ -16,7 +16,7 @@ variable "environment" {
 variable "secrets" {
   description = "Map of secret names to values"
   type        = map(string)
-  sensitive   = true
+  sensitive   = false
 }
 
 variable "rotation_enabled" {
@@ -34,14 +34,6 @@ resource "aws_secretsmanager_secret" "secrets" {
 
   name        = "${var.service_name}/${var.environment}/${each.key}"
   description = "Secret for ${each.key} in ${var.service_name} ${var.environment}"
-
-  # Rotation configuration
-  dynamic "rotation_rules" {
-    for_each = var.rotation_enabled ? [1] : []
-    content {
-      automatically_after_days = 30
-    }
-  }
 
   tags = {
     Name        = "${var.service_name}-${var.environment}-${each.key}"

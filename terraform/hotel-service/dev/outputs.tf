@@ -5,10 +5,10 @@ output "api_endpoint" {
 
 output "hotel_table_name" {
   description = "DynamoDB Hotels table name"
-  value       = module.hotel_service.dynamodb_table_names["hotels"]
+  value       = module.hotel_service.dynamodb_tables["hotels"].name
 }
 
 output "booking_table_name" {
   description = "DynamoDB Bookings table name"
-  value       = module.hotel_service.dynamodb_table_names["bookings"]
+  value       = module.hotel_service.dynamodb_tables["bookings"].name
 }
