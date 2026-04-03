@@ -12,11 +12,6 @@ import boto3
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-# Enable X-Ray tracing
-patch_all()
 
 # Add shared libraries to path
 sys.path.append('/opt/python')  # Lambda layer path

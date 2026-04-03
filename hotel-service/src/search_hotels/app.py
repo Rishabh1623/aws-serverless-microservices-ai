@@ -9,11 +9,6 @@ import os
 import boto3
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-# Enable X-Ray tracing for AWS SDK calls
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['HOTEL_TABLE'])
