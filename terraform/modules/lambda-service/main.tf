@@ -5,7 +5,9 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+# Import existing role if it exists, otherwise create it
 resource "aws_iam_role" "api_gateway_cloudwatch" {
+  count = var.environment == "dev" && var.service_name == "hotel-service" ? 1 : 0
   name = "api-gateway-cloudwatch-global"
 
   assume_role_policy = jsonencode({
@@ -21,12 +23,22 @@ resource "aws_iam_role" "api_gateway_cloudwatch" {
 }
 
 resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
-  role       = aws_iam_role.api_gateway_cloudwatch.name
+  count      = var.environment == "dev" && var.service_name == "hotel-service" ? 1 : 0
+  role       = aws_iam_role.api_gateway_cloudwatch[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
 
+# Use existing role for other services
+data "aws_iam_role" "api_gateway_cloudwatch_existing" {
+  count = var.environment == "dev" && var.service_name != "hotel-service" ? 1 : 0
+  name  = "api-gateway-cloudwatch-global"
+}
+
 resource "aws_api_gateway_account" "this" {
-  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+  cloudwatch_role_arn = var.environment == "dev" && var.service_name == "hotel-service" ? aws_iam_role.api_gateway_cloudwatch[0].arn : (var.environment == "dev" && var.service_name != "hotel-service" ? data.aws_iam_role.api_gateway_cloudwatch_existing[0].arn : null)
+  
+  # Only manage this resource in dev environment
+  count = var.environment == "dev" ? 1 : 0
 }
 
 # ============================================================================
@@ -71,7 +83,7 @@ resource "aws_api_gateway_stage" "this" {
   
   xray_tracing_enabled = true
   
-  depends_on = [aws_api_gateway_account.this]
+  depends_on = [aws_api_gateway_account.this[0]]
 }
 
 # CloudWatch Log Group for API Gateway
