@@ -210,7 +210,6 @@ module "cognito" {
 
   service_name   = var.service_name
   environment    = var.environment
-  api_gateway_id = module.hotel_service.api_gateway_id
 
   callback_urls = ["https://localhost:3000/callback"]
   logout_urls   = ["https://localhost:3000/logout"]
