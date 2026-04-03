@@ -8,10 +8,6 @@ import json
 import os
 import boto3
 from datetime import datetime
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
@@ -19,8 +15,6 @@ events = boto3.client('events')
 payments_table = dynamodb.Table(os.environ['PAYMENTS_TABLE'])
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
-
-@xray_recorder.capture('stripe_webhook')
 def lambda_handler(event, context):
     """
     Handle Stripe webhook events
@@ -32,19 +26,14 @@ def lambda_handler(event, context):
     - payment_intent.succeeded
     - payment_intent.payment_failed
     """
-    try:
-        xray_recorder.put_metadata('function', 'stripe_webhook')
-        
+    try:        
         # Verify webhook signature (in production)
         # stripe_signature = event['headers'].get('Stripe-Signature')
         # verify_webhook_signature(event['body'], stripe_signature)
         
         body = json.loads(event['body'])
         event_type = body.get('type')
-        data = body.get('data', {}).get('object', {})
-        
-        xray_recorder.put_annotation('event_type', event_type)
-        
+        data = body.get('data', {}).get('object', {})        
         # Handle different event types
         if event_type == 'charge.succeeded':
             handle_charge_succeeded(data)
@@ -67,14 +56,11 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error processing webhook: {str(e)}")
         import traceback
-        traceback.print_exc()
-        xray_recorder.put_annotation('error', True)
-        
+        traceback.print_exc()        
         return {
             'statusCode': 500,
             'body': json.dumps({'error': 'Webhook processing failed'})
         }
-
 
 def handle_charge_succeeded(charge):
     """Handle successful charge"""
@@ -91,7 +77,6 @@ def handle_charge_succeeded(charge):
         'status': 'succeeded'
     })
 
-
 def handle_charge_failed(charge):
     """Handle failed charge"""
     charge_id = charge.get('id')
@@ -104,7 +89,6 @@ def handle_charge_failed(charge):
         'failureReason': failure_message,
         'status': 'failed'
     })
-
 
 def handle_charge_refunded(charge):
     """Handle refunded charge"""
@@ -119,7 +103,6 @@ def handle_charge_refunded(charge):
         'status': 'refunded'
     })
 
-
 def handle_payment_intent_succeeded(payment_intent):
     """Handle successful payment intent"""
     intent_id = payment_intent.get('id')
@@ -127,14 +110,12 @@ def handle_payment_intent_succeeded(payment_intent):
     
     print(f"Payment intent succeeded: {intent_id}, amount: ${amount}")
 
-
 def handle_payment_intent_failed(payment_intent):
     """Handle failed payment intent"""
     intent_id = payment_intent.get('id')
     last_error = payment_intent.get('last_payment_error', {})
     
     print(f"Payment intent failed: {intent_id}, error: {last_error}")
-
 
 def publish_event(detail_type: str, detail: dict):
     """Publish event to EventBridge"""

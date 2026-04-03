@@ -10,10 +10,6 @@ import boto3
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
@@ -24,8 +20,6 @@ payments_table = dynamodb.Table(os.environ['PAYMENTS_TABLE'])
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
-
-@xray_recorder.capture('process_payment')
 def lambda_handler(event, context):
     """
     Process payment with Stripe
@@ -47,9 +41,7 @@ def lambda_handler(event, context):
     """
     start_time = datetime.now()
     
-    try:
-        xray_recorder.put_metadata('function', 'process_payment')
-        
+    try:        
         body = json.loads(event['body'])
         
         order_id = body['orderId']
@@ -146,10 +138,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('ProcessPayment', duration, float(amount))
-        
-        xray_recorder.put_annotation('payment_id', payment_id)
-        xray_recorder.put_metadata('amount', str(amount))
+        publish_metrics('ProcessPayment', duration, float(amount))        xray_recorder.put_metadata('amount', str(amount))
         
         return {
             'statusCode': 201,
@@ -169,9 +158,7 @@ def lambda_handler(event, context):
             })
         }
         
-    except KeyError as e:
-        xray_recorder.put_annotation('error', True)
-        return {
+    except KeyError as e:        return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Missing required field: {str(e)}'})
@@ -180,15 +167,12 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error processing payment: {str(e)}")
         import traceback
-        traceback.print_exc()
-        xray_recorder.put_annotation('error', True)
-        
+        traceback.print_exc()        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Payment processing failed'})
         }
-
 
 def get_stripe_key():
     """Get Stripe API key from Secrets Manager"""
@@ -200,7 +184,6 @@ def get_stripe_key():
     except Exception as e:
         print(f"Error getting Stripe key: {str(e)}")
         return 'sk_test_demo_key'  # Demo key
-
 
 def publish_metrics(operation: str, duration: float, revenue: float):
     """Publish custom CloudWatch metrics"""

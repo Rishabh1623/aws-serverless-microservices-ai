@@ -11,10 +11,6 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
@@ -24,8 +20,6 @@ orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 cart_table = dynamodb.Table(os.environ['CART_TABLE'])
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
-
-@xray_recorder.capture('create_order')
 def lambda_handler(event, context):
     """
     Create order from cart
@@ -44,9 +38,7 @@ def lambda_handler(event, context):
     """
     start_time = datetime.now()
     
-    try:
-        xray_recorder.put_metadata('function', 'create_order')
-        
+    try:        
         body = json.loads(event['body'])
         user_id = body['userId']
         guest_details = body.get('guestDetails', {})
@@ -131,10 +123,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('CreateOrder', duration, float(total_price))
-        
-        xray_recorder.put_annotation('order_id', order_id)
-        xray_recorder.put_metadata('total_price', str(total_price))
+        publish_metrics('CreateOrder', duration, float(total_price))        xray_recorder.put_metadata('total_price', str(total_price))
         
         return {
             'statusCode': 201,
@@ -154,9 +143,7 @@ def lambda_handler(event, context):
             })
         }
         
-    except KeyError as e:
-        xray_recorder.put_annotation('error', True)
-        return {
+    except KeyError as e:        return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Missing required field: {str(e)}'})
@@ -165,15 +152,12 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error creating order: {str(e)}")
         import traceback
-        traceback.print_exc()
-        xray_recorder.put_annotation('error', True)
-        
+        traceback.print_exc()        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Internal server error'})
         }
-
 
 def publish_metrics(operation: str, duration: float, order_value: float):
     """Publish custom CloudWatch metrics"""

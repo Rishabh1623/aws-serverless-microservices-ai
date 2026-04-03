@@ -32,7 +32,6 @@ rooms_table = dynamodb.Table(os.environ.get('ROOM_TABLE', 'rooms'))
 idempotency_table = os.environ.get('IDEMPOTENCY_TABLE', 'idempotency-keys')
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
-
 def lambda_handler(event, context):
     """
     Create hotel booking with DynamoDB transactions
@@ -194,10 +193,7 @@ def lambda_handler(event, context):
         
     except TransactionError as e:
         # Transaction failed (room unavailable, etc.)
-        print(f"Transaction error: {str(e)}")
-        
-        xray_recorder.put_annotation('error', True)
-        publish_booking_metrics('CreateBooking', 0, 0, success=False)
+        print(f"Transaction error: {str(e)}")        publish_booking_metrics('CreateBooking', 0, 0, success=False)
         
         return {
             'statusCode': 409,  # Conflict
@@ -226,7 +222,6 @@ def lambda_handler(event, context):
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Internal server error'})
         }
-
 
 def publish_booking_metrics(operation: str, duration: float, revenue: float, success: bool = True):
     """Publish business and operational metrics"""
@@ -268,7 +263,6 @@ def publish_booking_metrics(operation: str, duration: float, revenue: float, suc
         )
     except Exception as e:
         print(f"Error publishing metrics: {str(e)}")
-
 
 def check_availability(room_id: str, check_in: str, check_out: str) -> bool:
     """Check if room is available for dates"""

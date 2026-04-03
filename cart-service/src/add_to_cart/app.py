@@ -10,19 +10,12 @@ import boto3
 import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-# Enable X-Ray tracing
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 cloudwatch = boto3.client('cloudwatch')
 cart_table = dynamodb.Table(os.environ['CART_TABLE'])
 hotels_table = dynamodb.Table(os.environ.get('HOTELS_TABLE', 'hotels'))
 
-
-@xray_recorder.capture('add_to_cart')
 def lambda_handler(event, context):
     """
     Add item to cart
@@ -40,9 +33,7 @@ def lambda_handler(event, context):
     """
     start_time = datetime.now()
     
-    try:
-        xray_recorder.put_metadata('function', 'add_to_cart')
-        
+    try:        
         body = json.loads(event['body'])
         
         user_id = body['userId']
@@ -108,10 +99,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('AddToCart', duration, float(total_price))
-        
-        xray_recorder.put_annotation('cart_item_id', cart_item_id)
-        xray_recorder.put_metadata('total_price', str(total_price))
+        publish_metrics('AddToCart', duration, float(total_price))        xray_recorder.put_metadata('total_price', str(total_price))
         
         return {
             'statusCode': 201,
@@ -129,25 +117,20 @@ def lambda_handler(event, context):
             })
         }
         
-    except KeyError as e:
-        xray_recorder.put_annotation('error', True)
-        return {
+    except KeyError as e:        return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': f'Missing required field: {str(e)}'})
         }
     
     except Exception as e:
-        print(f"Error adding to cart: {str(e)}")
-        xray_recorder.put_annotation('error', True)
-        xray_recorder.put_metadata('error_message', str(e))
+        print(f"Error adding to cart: {str(e)}")        xray_recorder.put_metadata('error_message', str(e))
         
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Internal server error'})
         }
-
 
 def publish_metrics(operation: str, duration: float, cart_value: float):
     """Publish custom CloudWatch metrics"""

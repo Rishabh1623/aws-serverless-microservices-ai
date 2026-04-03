@@ -7,16 +7,10 @@ Removes item from user's cart.
 import json
 import os
 import boto3
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 cart_table = dynamodb.Table(os.environ['CART_TABLE'])
 
-
-@xray_recorder.capture('remove_from_cart')
 def lambda_handler(event, context):
     """
     Remove item from cart
@@ -25,10 +19,7 @@ def lambda_handler(event, context):
     """
     try:
         user_id = event['pathParameters']['userId']
-        cart_item_id = event['pathParameters']['cartItemId']
-        
-        xray_recorder.put_annotation('cart_item_id', cart_item_id)
-        
+        cart_item_id = event['pathParameters']['cartItemId']        
         # Delete item
         cart_table.delete_item(
             Key={'cartItemId': cart_item_id}
@@ -44,9 +35,7 @@ def lambda_handler(event, context):
         }
         
     except Exception as e:
-        print(f"Error removing from cart: {str(e)}")
-        xray_recorder.put_annotation('error', True)
-        
+        print(f"Error removing from cart: {str(e)}")        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

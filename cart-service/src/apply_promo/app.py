@@ -9,17 +9,11 @@ import os
 import boto3
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 cart_table = dynamodb.Table(os.environ['CART_TABLE'])
 promo_table = dynamodb.Table(os.environ.get('PROMO_TABLE', 'promo-codes'))
 
-
-@xray_recorder.capture('apply_promo')
 def lambda_handler(event, context):
     """
     Apply promo code
@@ -30,10 +24,7 @@ def lambda_handler(event, context):
     try:
         user_id = event['pathParameters']['userId']
         body = json.loads(event['body'])
-        promo_code = body['promoCode'].upper()
-        
-        xray_recorder.put_annotation('promo_code', promo_code)
-        
+        promo_code = body['promoCode'].upper()        
         # Validate promo code
         promo_response = promo_table.get_item(Key={'promoCode': promo_code})
         
@@ -102,9 +93,7 @@ def lambda_handler(event, context):
         }
     
     except Exception as e:
-        print(f"Error applying promo: {str(e)}")
-        xray_recorder.put_annotation('error', True)
-        
+        print(f"Error applying promo: {str(e)}")        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

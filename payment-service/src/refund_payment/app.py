@@ -10,10 +10,6 @@ import boto3
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
@@ -22,8 +18,6 @@ cloudwatch = boto3.client('cloudwatch')
 payments_table = dynamodb.Table(os.environ['PAYMENTS_TABLE'])
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
-
-@xray_recorder.capture('refund_payment')
 def lambda_handler(event, context):
     """
     Refund payment
@@ -37,9 +31,7 @@ def lambda_handler(event, context):
     """
     start_time = datetime.now()
     
-    try:
-        xray_recorder.put_metadata('function', 'refund_payment')
-        
+    try:        
         payment_id = event['pathParameters']['paymentId']
         body = json.loads(event['body'])
         
@@ -120,10 +112,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('RefundPayment', duration, float(refund_amount))
-        
-        xray_recorder.put_annotation('refund_id', refund_id)
-        xray_recorder.put_metadata('refund_amount', str(refund_amount))
+        publish_metrics('RefundPayment', duration, float(refund_amount))        xray_recorder.put_metadata('refund_amount', str(refund_amount))
         
         return {
             'statusCode': 200,
@@ -144,15 +133,12 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error processing refund: {str(e)}")
         import traceback
-        traceback.print_exc()
-        xray_recorder.put_annotation('error', True)
-        
+        traceback.print_exc()        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Refund processing failed'})
         }
-
 
 def publish_metrics(operation: str, duration: float, amount: float):
     """Publish custom CloudWatch metrics"""

@@ -7,16 +7,10 @@ Retrieves order details by order ID.
 import json
 import os
 import boto3
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 
-
-@xray_recorder.capture('get_order')
 def lambda_handler(event, context):
     """
     Get order details
@@ -24,10 +18,7 @@ def lambda_handler(event, context):
     GET /orders/{orderId}
     """
     try:
-        order_id = event['pathParameters']['orderId']
-        
-        xray_recorder.put_annotation('order_id', order_id)
-        
+        order_id = event['pathParameters']['orderId']        
         # Get order
         response = orders_table.get_item(Key={'orderId': order_id})
         
@@ -55,9 +46,7 @@ def lambda_handler(event, context):
         }
         
     except Exception as e:
-        print(f"Error getting order: {str(e)}")
-        xray_recorder.put_annotation('error', True)
-        
+        print(f"Error getting order: {str(e)}")        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

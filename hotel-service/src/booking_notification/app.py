@@ -18,7 +18,6 @@ configuration_set = os.environ.get('SES_CONFIGURATION_SET', 'travel-platform-dev
 from_email = os.environ.get('FROM_EMAIL', 'bookings@example.com')
 template_name = os.environ.get('TEMPLATE_NAME', 'booking-confirmation-dev')
 
-
 def lambda_handler(event, context):
     """
     Process booking created events and send confirmation emails

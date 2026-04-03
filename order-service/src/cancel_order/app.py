@@ -8,18 +8,12 @@ import json
 import os
 import boto3
 from datetime import datetime
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 event_bus_name = os.environ.get('EVENT_BUS_NAME', 'travel-platform-dev')
 
-
-@xray_recorder.capture('cancel_order')
 def lambda_handler(event, context):
     """
     Cancel order
@@ -30,10 +24,7 @@ def lambda_handler(event, context):
     try:
         order_id = event['pathParameters']['orderId']
         body = json.loads(event.get('body', '{}'))
-        reason = body.get('reason', 'Customer requested')
-        
-        xray_recorder.put_annotation('order_id', order_id)
-        
+        reason = body.get('reason', 'Customer requested')        
         # Get order
         response = orders_table.get_item(Key={'orderId': order_id})
         
@@ -99,9 +90,7 @@ def lambda_handler(event, context):
         }
         
     except Exception as e:
-        print(f"Error cancelling order: {str(e)}")
-        xray_recorder.put_annotation('error', True)
-        
+        print(f"Error cancelling order: {str(e)}")        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

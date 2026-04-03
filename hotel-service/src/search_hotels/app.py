@@ -16,7 +16,6 @@ table = dynamodb.Table(os.environ['HOTEL_TABLE'])
 # CloudWatch Metrics
 cloudwatch = boto3.client('cloudwatch')
 
-
 def lambda_handler(event, context):
     """
     Search hotels with filters
@@ -129,7 +128,6 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': 'Internal server error'})
         }
 
-
 def publish_metrics(operation: str, duration: float, result_count: int, error: bool = False):
     """Publish custom CloudWatch metrics for operational excellence"""
     try:
@@ -164,7 +162,6 @@ def publish_metrics(operation: str, duration: float, result_count: int, error: b
         print(f"Error publishing metrics: {str(e)}")
         # Don't fail the request if metrics fail
 
-
 def calculate_dynamic_price(base_price: float, check_in: str, check_out: str) -> float:
     """Calculate dynamic price based on dates"""
     try:
@@ -192,6 +189,5 @@ def calculate_dynamic_price(base_price: float, check_in: str, check_out: str) ->
         
     except:
         return base_price
-
 
 from datetime import timedelta

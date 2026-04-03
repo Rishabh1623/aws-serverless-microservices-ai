@@ -11,7 +11,6 @@ import boto3
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['HOTEL_TABLE'])
 
-
 def lambda_handler(event, context):
     """Get hotel details by ID"""
     try:

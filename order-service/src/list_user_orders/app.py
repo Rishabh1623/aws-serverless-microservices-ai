@@ -8,16 +8,10 @@ import json
 import os
 import boto3
 from boto3.dynamodb.conditions import Key
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch_all
-
-patch_all()
 
 dynamodb = boto3.resource('dynamodb')
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 
-
-@xray_recorder.capture('list_user_orders')
 def lambda_handler(event, context):
     """
     List user's orders
@@ -30,10 +24,7 @@ def lambda_handler(event, context):
         params = event.get('queryStringParameters') or {}
         
         status_filter = params.get('status')
-        limit = int(params.get('limit', 50))
-        
-        xray_recorder.put_annotation('user_id', user_id)
-        
+        limit = int(params.get('limit', 50))        
         # Query orders
         query_params = {
             'IndexName': 'UserIdIndex',
@@ -72,9 +63,7 @@ def lambda_handler(event, context):
         }
         
     except Exception as e:
-        print(f"Error listing orders: {str(e)}")
-        xray_recorder.put_annotation('error', True)
-        
+        print(f"Error listing orders: {str(e)}")        
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
