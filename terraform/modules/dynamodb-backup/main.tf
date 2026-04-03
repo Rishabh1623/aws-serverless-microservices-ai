@@ -28,22 +28,8 @@ variable "backup_retention_days" {
 # POINT-IN-TIME RECOVERY
 # ============================================================================
 
-resource "aws_dynamodb_table_item" "pitr_enable" {
-  for_each = toset(var.table_names)
-
-  table_name = each.value
-  hash_key   = "dummy"  # Not actually used, just for resource creation
-
-  # This is a workaround - actual PITR is enabled via aws_dynamodb_table resource
-  # In production, add this to your table definitions:
-  # point_in_time_recovery {
-  #   enabled = true
-  # }
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
+# PITR is enabled directly in the DynamoDB table definitions
+# See lambda-service module: point_in_time_recovery { enabled = true }
 
 # ============================================================================
 # BACKUP PLAN

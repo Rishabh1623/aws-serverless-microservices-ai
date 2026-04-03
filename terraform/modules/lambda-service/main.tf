@@ -340,3 +340,37 @@ resource "aws_ssm_parameter" "api_endpoint" {
   type        = "String"
   value       = aws_api_gateway_stage.this.invoke_url
 }
+
+# ============================================================================
+# OUTPUTS
+# ============================================================================
+
+output "lambda_functions" {
+  description = "Map of Lambda functions"
+  value       = aws_lambda_function.functions
+}
+
+output "lambda_roles" {
+  description = "Map of Lambda IAM roles"
+  value       = { for k, v in aws_lambda_function.functions : k => aws_iam_role.lambda_role }
+}
+
+output "api_gateway_id" {
+  description = "API Gateway REST API ID"
+  value       = aws_api_gateway_rest_api.this.id
+}
+
+output "api_gateway_url" {
+  description = "API Gateway invoke URL"
+  value       = aws_api_gateway_stage.this.invoke_url
+}
+
+output "api_endpoint" {
+  description = "API Gateway endpoint URL"
+  value       = aws_api_gateway_stage.this.invoke_url
+}
+
+output "dynamodb_tables" {
+  description = "Map of DynamoDB tables"
+  value       = aws_dynamodb_table.tables
+}
