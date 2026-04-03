@@ -309,7 +309,7 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets" {
   for_each = module.hotel_service.lambda_roles
 
   role       = each.value.name
-  policy_arn = module.secrets.secrets_read_policy_arn
+  policy_arn = module.secrets.secrets_access_policy_arn
 }
 
 # Grant Lambda access to send emails
