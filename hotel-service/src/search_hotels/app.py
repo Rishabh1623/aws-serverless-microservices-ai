@@ -35,9 +35,6 @@ def lambda_handler(event, context):
     start_time = datetime.now()
     
     try:
-        # Add metadata to X-Ray trace
-        xray_recorder.put_metadata('function', 'search_hotels')
-        xray_recorder.put_annotation('destination', event.get('queryStringParameters', {}).get('destination', 'unknown'))
         params = event.get('queryStringParameters') or {}
         
         destination = params.get('destination')
@@ -100,10 +97,6 @@ def lambda_handler(event, context):
         duration = (datetime.now() - start_time).total_seconds() * 1000
         publish_metrics('SearchHotels', duration, len(hotels))
         
-        # Add performance metadata
-        xray_recorder.put_metadata('results_count', len(hotels))
-        xray_recorder.put_metadata('duration_ms', duration)
-        
         return {
             'statusCode': 200,
             'headers': {
@@ -126,10 +119,6 @@ def lambda_handler(event, context):
         
     except Exception as e:
         print(f"Error searching hotels: {str(e)}")
-        
-        # Record error in X-Ray
-        xray_recorder.put_annotation('error', True)
-        xray_recorder.put_metadata('error_message', str(e))
         
         # Publish error metric
         publish_metrics('SearchHotels', 0, 0, error=True)

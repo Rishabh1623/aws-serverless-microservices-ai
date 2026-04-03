@@ -63,7 +63,6 @@ def lambda_handler(event, context):
     start_time = datetime.now()
     
     try:
-        xray_recorder.put_metadata('function', 'create_booking')
         body = json.loads(event['body'])
         
         # Extract fields
@@ -182,10 +181,6 @@ def lambda_handler(event, context):
         duration = (datetime.now() - start_time).total_seconds() * 1000
         publish_booking_metrics('CreateBooking', duration, float(total_price), success=True)
         
-        # Add trace metadata
-        xray_recorder.put_annotation('booking_id', booking_id)
-        xray_recorder.put_metadata('total_price', str(total_price))
-        xray_recorder.put_metadata('duration_ms', duration)
         
         return {
             'statusCode': 201,
@@ -202,7 +197,6 @@ def lambda_handler(event, context):
         print(f"Transaction error: {str(e)}")
         
         xray_recorder.put_annotation('error', True)
-        xray_recorder.put_annotation('error_type', 'TransactionError')
         publish_booking_metrics('CreateBooking', 0, 0, success=False)
         
         return {
@@ -212,8 +206,6 @@ def lambda_handler(event, context):
         }
     
     except KeyError as e:
-        xray_recorder.put_annotation('error', True)
-        xray_recorder.put_annotation('error_type', 'ValidationError')
         publish_booking_metrics('CreateBooking', 0, 0, success=False)
         
         return {
@@ -227,8 +219,6 @@ def lambda_handler(event, context):
         import traceback
         traceback.print_exc()
         
-        xray_recorder.put_annotation('error', True)
-        xray_recorder.put_metadata('error_message', str(e))
         publish_booking_metrics('CreateBooking', 0, 0, success=False)
         
         return {
