@@ -1,6 +1,3 @@
-}
-}
-
 # API Gateway REST API
 resource "aws_api_gateway_rest_api" "this" {
   name        = "${var.service_name}-${var.environment}"

@@ -117,7 +117,7 @@ resource "aws_ses_template" "booking_confirmation" {
             <p><strong>Check-in:</strong> {{checkIn}}</p>
             <p><strong>Check-out:</strong> {{checkOut}}</p>
             <p><strong>Guests:</strong> {{guests}}</p>
-            <p><strong>Total Price:</strong> ${{totalPrice}}</p>
+            <p><strong>Total Price:</strong> $${{totalPrice}}</p>
           </div>
           
           <p>If you have any questions, please contact us.</p>
