@@ -189,9 +189,9 @@ resource "aws_iam_policy" "ses_send_email" {
 # OUTPUTS
 # ============================================================================
 
-output "domain_identity_arn" {
-  description = "SES domain identity ARN"
-  value       = aws_ses_domain_identity.main.arn
+output "from_email_identity_arn" {
+  description = "SES email identity ARN"
+  value       = aws_ses_email_identity.from_email.arn
 }
 
 output "configuration_set_name" {
