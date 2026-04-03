@@ -12,3 +12,8 @@ output "booking_table_name" {
   description = "DynamoDB Bookings table name"
   value       = module.hotel_service.dynamodb_tables["bookings"].name
 }
+
+output "api_gateway_url" {
+  description = "API Gateway URL"
+  value       = module.hotel_service.api_gateway_url
+}
