@@ -163,9 +163,11 @@ module "cart_service" {
 # ============================================================================
 
 data "terraform_remote_state" "event_driven" {
-  backend = "local"
+  backend = "s3"
   config = {
-    path = "../../hotel-service/dev/terraform.tfstate"
+    bucket = "terraform-state-600105205879"
+    key    = "hotel-service/dev/terraform.tfstate"
+    region = "us-east-1"
   }
 }
 
