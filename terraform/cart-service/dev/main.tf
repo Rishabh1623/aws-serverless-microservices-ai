@@ -98,17 +98,16 @@ module "cart_service" {
       path_part  = "items"
       parent_key = "cart"
     }
-    cart_item_id = {
+    cart_item = {
       path_part  = "{itemId}"
       parent_key = "cart_items"
     }
-    cart_promo = {
-      path_part  = "promo"
-      parent_key = "cart"
+    promo = {
+      path_part = "promo"
     }
-    cart_promo_user = {
+    promo_user = {
       path_part  = "{userId}"
-      parent_key = "cart_promo"
+      parent_key = "promo"
     }
   }
 
@@ -124,12 +123,12 @@ module "cart_service" {
       lambda_key   = "get-cart"
     }
     remove_from_cart = {
-      resource_key = "cart_item_id"
+      resource_key = "cart_item"
       http_method  = "DELETE"
       lambda_key   = "remove-from-cart"
     }
     apply_promo = {
-      resource_key = "cart_promo_user"
+      resource_key = "promo_user"
       http_method  = "POST"
       lambda_key   = "apply-promo"
     }
