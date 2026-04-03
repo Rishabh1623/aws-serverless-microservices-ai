@@ -161,7 +161,7 @@ resource "aws_ses_template" "payment_receipt" {
             <h3>Payment Details</h3>
             <p><strong>Receipt Number:</strong> {{paymentId}}</p>
             <p><strong>Booking ID:</strong> {{bookingId}}</p>
-            <p><strong>Amount Paid:</strong> ${{amount}}</p>
+            <p><strong>Amount Paid:</strong> $${{amount}}</p>
             <p><strong>Payment Method:</strong> {{paymentMethod}}</p>
             <p><strong>Date:</strong> {{paymentDate}}</p>
           </div>
@@ -173,7 +173,7 @@ resource "aws_ses_template" "payment_receipt" {
     </body>
     </html>
   HTML
-  text    = "Payment Receipt: {{paymentId}}, Booking: {{bookingId}}, Amount: ${{amount}}"
+  text    = "Payment Receipt: {{paymentId}}, Booking: {{bookingId}}, Amount: $${{amount}}"
 }
 
 # ============================================================================
