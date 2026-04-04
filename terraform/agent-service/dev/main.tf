@@ -1,6 +1,67 @@
 data "aws_caller_identity" "current" {}
 
 # ============================================================================
+# DATA SOURCES - Get API URLs from other services
+# ============================================================================
+
+data "terraform_remote_state" "hotel_service" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-600105205879"
+    key    = "hotel-service/dev/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "terraform_remote_state" "cart_service" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-600105205879"
+    key    = "cart-service/dev/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "terraform_remote_state" "order_service" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-600105205879"
+    key    = "order-service/dev/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "terraform_remote_state" "payment_service" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-600105205879"
+    key    = "payment-service/dev/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+locals {
+  service_name = "agent-service"
+  environment  = "dev"
+
+  # Get API endpoints from deployed services
+  hotel_api_url   = data.terraform_remote_state.hotel_service.outputs.api_gateway_url
+  cart_api_url    = data.terraform_remote_state.cart_service.outputs.api_gateway_url
+  order_api_url   = data.terraform_remote_state.order_service.outputs.api_gateway_url
+  payment_api_url = data.terraform_remote_state.payment_service.outputs.api_gateway_url
+}
+
+# ============================================================================
+# LAMBDA DEPLOYMENT PACKAGE
+# ============================================================================
+
+data "archive_file" "agent" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../agent-service/src"
+  output_path = "${path.module}/lambda_packages/agent-service.zip"
+}
+
+# ============================================================================
 # SECRETS MANAGER
 # ============================================================================
 
@@ -11,32 +72,17 @@ module "secrets" {
   environment  = local.environment
 
   secrets = {
-    bedrock_config = {
-      description = "Bedrock API configuration"
-      secret_string = jsonencode({
-        model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
-        region   = var.aws_region
-      })
-    }
-    api_endpoints = {
-      description = "Microservice API endpoints"
-      secret_string = jsonencode({
-        hotel_api_url   = var.hotel_api_url
-        order_api_url   = var.order_api_url
-        payment_api_url = var.payment_api_url
-      })
-    }
+    bedrock_config = jsonencode({
+      model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+      region   = var.aws_region
+    })
+    api_endpoints = jsonencode({
+      hotel_api_url   = local.hotel_api_url
+      cart_api_url    = local.cart_api_url
+      order_api_url   = local.order_api_url
+      payment_api_url = local.payment_api_url
+    })
   }
-}
-
-locals {
-  service_name = "agent-service"
-  environment  = "dev"
-
-  # Get API endpoints from variables
-  hotel_api_url   = var.hotel_api_url
-  order_api_url   = var.order_api_url
-  payment_api_url = var.payment_api_url
 }
 
 # ============================================================================
@@ -48,8 +94,8 @@ resource "aws_lambda_function" "agent" {
   description   = "AI Travel Assistant using Strands Agents SDK and Bedrock"
 
   # Deployment package
-  filename         = "${path.module}/../../../agent-service-lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../../agent-service-lambda.zip")
+  filename         = data.archive_file.agent.output_path
+  source_code_hash = data.archive_file.agent.output_base64sha256
 
   # Runtime configuration
   runtime = "python3.11"
@@ -66,6 +112,7 @@ resource "aws_lambda_function" "agent" {
   environment {
     variables = {
       HOTEL_API_URL    = local.hotel_api_url
+      CART_API_URL     = local.cart_api_url
       ORDER_API_URL    = local.order_api_url
       PAYMENT_API_URL  = local.payment_api_url
       BEDROCK_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
@@ -136,7 +183,7 @@ resource "aws_iam_role_policy" "bedrock_access" {
 # Secrets Manager permissions
 resource "aws_iam_role_policy_attachment" "lambda_secrets" {
   role       = aws_iam_role.agent_lambda.name
-  policy_arn = module.secrets.secrets_read_policy_arn
+  policy_arn = module.secrets.secrets_access_policy_arn
 }
 
 # ============================================================================
