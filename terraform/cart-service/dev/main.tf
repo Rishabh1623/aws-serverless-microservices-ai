@@ -101,8 +101,8 @@ module "cart_service" {
       path_part  = "add"
       parent_key = "items"
     }
-    items_id = {
-      path_part  = "{itemId}"
+    items_remove = {
+      path_part  = "remove"
       parent_key = "items"
     }
     promo = {
@@ -126,8 +126,8 @@ module "cart_service" {
       lambda_key   = "add-to-cart"
     }
     remove_from_cart = {
-      resource_key = "items_id"
-      http_method  = "DELETE"
+      resource_key = "items_remove"
+      http_method  = "POST"
       lambda_key   = "remove-from-cart"
     }
     apply_promo = {
