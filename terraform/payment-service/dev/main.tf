@@ -176,12 +176,9 @@ module "secrets" {
   environment  = var.environment
 
   secrets = {
-    stripe = {
-      description = "Stripe API configuration"
-      secret_string = jsonencode({
-        api_key = var.stripe_api_key
-      })
-    }
+    stripe = jsonencode({
+      api_key = var.stripe_api_key
+    })
   }
 }
 
@@ -214,7 +211,7 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets" {
   for_each = module.payment_service.lambda_roles
 
   role       = each.value.name
-  policy_arn = module.secrets.secrets_read_policy_arn
+  policy_arn = module.secrets.secrets_access_policy_arn
 }
 
 # Grant Lambda access to Orders table
