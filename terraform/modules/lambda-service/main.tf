@@ -246,25 +246,30 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 # API Gateway Resources and Integrations
-# Pre-compute resource levels to avoid evaluation order issues
+# Use a two-pass approach to properly detect resource hierarchy
 
 locals {
-  # Compute levels explicitly
+  # First pass: identify root resources (no parent)
   root_level_resources = {
     for k, v in var.api_gateway_resources : k => v
     if lookup(v, "parent_key", null) == null
   }
   
+  # Second pass: identify level 2 resources (parent is root)
+  # Check if parent_key exists in the original var, and that parent has no parent_key
   level2_resources = {
     for k, v in var.api_gateway_resources : k => v
     if lookup(v, "parent_key", null) != null &&
-       contains(keys(local.root_level_resources), v.parent_key)
+       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) == null
   }
   
+  # Third pass: identify level 3 resources (parent is level 2)
+  # Check if parent exists and parent's parent exists
   level3_resources = {
     for k, v in var.api_gateway_resources : k => v
     if lookup(v, "parent_key", null) != null &&
-       contains(keys(local.level2_resources), v.parent_key)
+       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) != null &&
+       lookup(var.api_gateway_resources[var.api_gateway_resources[v.parent_key].parent_key], "parent_key", null) == null
   }
 }
 
