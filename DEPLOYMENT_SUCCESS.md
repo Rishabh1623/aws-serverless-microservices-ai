@@ -20,10 +20,16 @@
    - Tables: orders
 
 4. **Payment Service** ✅
-   - API: `https://[payment-api-url]/dev`
+   - API: `https://[from-terraform-output]/dev`
    - Lambdas: process-payment, get-payment, refund-payment, stripe-webhook
    - Tables: payments
    - Secrets: Stripe API key
+
+5. **Agent Service** ✅
+   - API: `https://bj623ttpd4.execute-api.us-east-1.amazonaws.com`
+   - Lambda: agent-service-dev (AI Travel Assistant)
+   - Integration: Amazon Bedrock (Claude 3 Sonnet)
+   - Secrets: Bedrock config, API endpoints
 
 ## API Endpoints
 
@@ -56,6 +62,11 @@ POST /payments                  - Process payment
 GET  /payments/{paymentId}      - Get payment details
 POST /payments/{paymentId}/refund - Refund payment
 POST /payments/webhook          - Stripe webhook
+```
+
+### Agent Service
+```
+POST /agent                     - AI Travel Assistant chat endpoint
 ```
 
 ## Infrastructure Components
@@ -116,10 +127,18 @@ VITE_HOTEL_API=https://zttuy6f8bj.execute-api.us-east-1.amazonaws.com/dev
 VITE_CART_API=https://tdhw00lrs5.execute-api.us-east-1.amazonaws.com/dev
 VITE_ORDER_API=https://bn8bfxmsfb.execute-api.us-east-1.amazonaws.com/dev
 VITE_PAYMENT_API=https://[payment-api-url]/dev
+VITE_AGENT_API=https://bj623ttpd4.execute-api.us-east-1.amazonaws.com
 ```
 
-### 4. Deploy Agent Service (Optional)
-The AI agent service can be deployed separately when needed for conversational booking.
+### 4. Test Agent Service
+```bash
+curl -X POST https://bj623ttpd4.execute-api.us-east-1.amazonaws.com/agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "I want to book a hotel in Paris for 2 nights",
+    "userId": "user-123"
+  }'
+```
 
 ## Cost Estimate
 

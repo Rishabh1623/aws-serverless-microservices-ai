@@ -57,7 +57,7 @@ locals {
 
 data "archive_file" "agent" {
   type        = "zip"
-  source_dir  = "${path.module}/../../../agent-service/src"
+  source_dir  = "${path.module}/../../../agent-service/src/agent_handler"
   output_path = "${path.module}/lambda_packages/agent-service.zip"
 }
 
