@@ -246,30 +246,24 @@ resource "aws_lambda_permission" "api_gateway" {
 }
 
 # API Gateway Resources and Integrations
-# Locals for resource level detection
-locals {
-  # Root resources have no parent_key
-  root_resource_keys = [for k, v in var.api_gateway_resources : k if lookup(v, "parent_key", null) == null]
-  
-  # Level 2 resources have a parent that is a root resource
-  level2_resource_keys = [for k, v in var.api_gateway_resources : k if lookup(v, "parent_key", null) != null && contains([for k2, v2 in var.api_gateway_resources : k2 if lookup(v2, "parent_key", null) == null], v.parent_key)]
-  
-  # Level 3 resources have a parent that is a level 2 resource
-  level3_resource_keys = [for k, v in var.api_gateway_resources : k if lookup(v, "parent_key", null) != null && contains([for k2, v2 in var.api_gateway_resources : k2 if lookup(v2, "parent_key", null) != null && contains([for k3, v3 in var.api_gateway_resources : k3 if lookup(v3, "parent_key", null) == null], v2.parent_key)], v.parent_key)]
-}
+# Create resources in explicit dependency order
 
-# API Gateway Resources - Stage 1: Root level resources (no parent)
+# Stage 1: Root level resources (no parent_key)
 resource "aws_api_gateway_resource" "root_resources" {
-  for_each = { for k, v in var.api_gateway_resources : k => v if contains(local.root_resource_keys, k) }
+  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) == null }
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
   path_part   = each.value.path_part
 }
 
-# API Gateway Resources - Stage 2: Level 2 nested resources (parent is root-level)
+# Stage 2: Level 2 resources (parent exists and parent has no parent_key)
 resource "aws_api_gateway_resource" "level2_resources" {
-  for_each = { for k, v in var.api_gateway_resources : k => v if contains(local.level2_resource_keys, k) }
+  for_each = { 
+    for k, v in var.api_gateway_resources : k => v 
+    if lookup(v, "parent_key", null) != null && 
+       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) == null
+  }
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.root_resources[each.value.parent_key].id
@@ -278,9 +272,13 @@ resource "aws_api_gateway_resource" "level2_resources" {
   depends_on = [aws_api_gateway_resource.root_resources]
 }
 
-# API Gateway Resources - Stage 3: Level 3 nested resources (parent is level 2)
+# Stage 3: Level 3 resources (parent exists and parent's parent exists)
 resource "aws_api_gateway_resource" "level3_resources" {
-  for_each = { for k, v in var.api_gateway_resources : k => v if contains(local.level3_resource_keys, k) }
+  for_each = { 
+    for k, v in var.api_gateway_resources : k => v 
+    if lookup(v, "parent_key", null) != null && 
+       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) != null
+  }
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.level2_resources[each.value.parent_key].id
