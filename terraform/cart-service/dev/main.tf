@@ -97,20 +97,8 @@ module "cart_service" {
     items = {
       path_part = "items"
     }
-    items_add = {
-      path_part  = "add"
-      parent_key = "items"
-    }
-    items_remove = {
-      path_part  = "remove"
-      parent_key = "items"
-    }
     promo = {
       path_part = "promo"
-    }
-    promo_apply = {
-      path_part  = "apply"
-      parent_key = "promo"
     }
   }
 
@@ -121,17 +109,17 @@ module "cart_service" {
       lambda_key   = "get-cart"
     }
     add_to_cart = {
-      resource_key = "items_add"
+      resource_key = "items"
       http_method  = "POST"
       lambda_key   = "add-to-cart"
     }
     remove_from_cart = {
-      resource_key = "items_remove"
-      http_method  = "POST"
+      resource_key = "items"
+      http_method  = "DELETE"
       lambda_key   = "remove-from-cart"
     }
     apply_promo = {
-      resource_key = "promo_apply"
+      resource_key = "promo"
       http_method  = "POST"
       lambda_key   = "apply-promo"
     }
