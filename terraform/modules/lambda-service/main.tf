@@ -248,9 +248,27 @@ resource "aws_lambda_permission" "api_gateway" {
 # API Gateway Resources and Integrations
 # Create resources in explicit dependency order
 
+# Debug: Output what we're detecting
+locals {
+  debug_root = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) == null }
+  debug_level2 = { 
+    for k, v in var.api_gateway_resources : k => v 
+    if lookup(v, "parent_key", null) != null && 
+       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) == null
+  }
+}
+
+output "debug_root_resources" {
+  value = keys(local.debug_root)
+}
+
+output "debug_level2_resources" {
+  value = keys(local.debug_level2)
+}
+
 # Stage 1: Root level resources (no parent_key)
 resource "aws_api_gateway_resource" "root_resources" {
-  for_each = { for k, v in var.api_gateway_resources : k => v if lookup(v, "parent_key", null) == null }
+  for_each = local.debug_root
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
@@ -259,11 +277,7 @@ resource "aws_api_gateway_resource" "root_resources" {
 
 # Stage 2: Level 2 resources (parent exists and parent has no parent_key)
 resource "aws_api_gateway_resource" "level2_resources" {
-  for_each = { 
-    for k, v in var.api_gateway_resources : k => v 
-    if lookup(v, "parent_key", null) != null && 
-       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) == null
-  }
+  for_each = local.debug_level2
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_resource.root_resources[each.value.parent_key].id
