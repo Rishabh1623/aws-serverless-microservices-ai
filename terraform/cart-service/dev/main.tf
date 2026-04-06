@@ -86,13 +86,10 @@ module "cart_service" {
     }
   }
 
+  # Simplified - only root resources, use HTTP methods for operations
   api_gateway_resources = {
     cart = {
       path_part = "cart"
-    }
-    cart_user = {
-      path_part  = "{userId}"
-      parent_key = "cart"
     }
     items = {
       path_part = "items"
@@ -104,7 +101,7 @@ module "cart_service" {
 
   api_gateway_methods = {
     get_cart = {
-      resource_key = "cart_user"
+      resource_key = "cart"
       http_method  = "GET"
       lambda_key   = "get-cart"
     }

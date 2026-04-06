@@ -18,10 +18,19 @@ def lambda_handler(event, context):
     """
     Get user's cart
     
-    Path: /cart/{userId}
+    Path: /cart?userId=xxx
     """
     try:
-        user_id = event['pathParameters']['userId']        
+        # Get userId from query parameters
+        user_id = event.get('queryStringParameters', {}).get('userId')
+        
+        if not user_id:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'userId query parameter is required'})
+            }
+        
         # Query cart items for user
         response = cart_table.query(
             IndexName='UserIdIndex',
@@ -41,9 +50,6 @@ def lambda_handler(event, context):
         for item in items:
             item['pricePerNight'] = float(item.get('pricePerNight', 0))
             item['totalPrice'] = float(item.get('totalPrice', 0))
-        
-        xray_recorder.put_metadata('items_count', len(items))
-        xray_recorder.put_metadata('total_price', str(total_price))
         
         return {
             'statusCode': 200,
