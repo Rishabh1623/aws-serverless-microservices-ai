@@ -245,71 +245,49 @@ resource "aws_lambda_permission" "api_gateway" {
   source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
 }
 
-# API Gateway Resources and Integrations
-# Use a two-pass approach to properly detect resource hierarchy
+# API Gateway Resources - Simplified Single-Pass Approach
+# Terraform automatically handles dependency order when resources reference each other
 
 locals {
-  # First pass: identify root resources (no parent)
-  root_level_resources = {
+  # Separate resources by level for ordered creation
+  root_resources = {
     for k, v in var.api_gateway_resources : k => v
     if lookup(v, "parent_key", null) == null
   }
-  
-  # Second pass: identify level 2 resources (parent is root)
-  # Check if parent_key exists in the original var, and that parent has no parent_key
-  level2_resources = {
+  child_resources = {
     for k, v in var.api_gateway_resources : k => v
-    if lookup(v, "parent_key", null) != null &&
-       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) == null
-  }
-  
-  # Third pass: identify level 3 resources (parent is level 2)
-  # Check if parent exists and parent's parent exists
-  level3_resources = {
-    for k, v in var.api_gateway_resources : k => v
-    if lookup(v, "parent_key", null) != null &&
-       lookup(var.api_gateway_resources[v.parent_key], "parent_key", null) != null &&
-       lookup(var.api_gateway_resources[var.api_gateway_resources[v.parent_key].parent_key], "parent_key", null) == null
+    if lookup(v, "parent_key", null) != null
   }
 }
 
-# Stage 1: Root level resources
-resource "aws_api_gateway_resource" "root_resources" {
-  for_each = local.root_level_resources
+# Create root resources first
+resource "aws_api_gateway_resource" "root" {
+  for_each = local.root_resources
   
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
   path_part   = each.value.path_part
 }
 
-# Stage 2: Level 2 resources
-resource "aws_api_gateway_resource" "level2_resources" {
-  for_each = local.level2_resources
+# Create child resources (any level) - they reference parents automatically
+resource "aws_api_gateway_resource" "child" {
+  for_each = local.child_resources
   
   rest_api_id = aws_api_gateway_rest_api.this.id
-  parent_id   = aws_api_gateway_resource.root_resources[each.value.parent_key].id
-  path_part   = each.value.path_part
+  parent_id   = try(
+    aws_api_gateway_resource.child[each.value.parent_key].id,
+    aws_api_gateway_resource.root[each.value.parent_key].id
+  )
+  path_part = each.value.path_part
   
-  depends_on = [aws_api_gateway_resource.root_resources]
-}
-
-# Stage 3: Level 3 resources
-resource "aws_api_gateway_resource" "level3_resources" {
-  for_each = local.level3_resources
-  
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  parent_id   = aws_api_gateway_resource.level2_resources[each.value.parent_key].id
-  path_part   = each.value.path_part
-  
-  depends_on = [aws_api_gateway_resource.level2_resources]
+  depends_on = [aws_api_gateway_resource.root]
 }
 
 # Merge all resource maps
 locals {
   all_resources = merge(
-    aws_api_gateway_resource.root_resources,
-    aws_api_gateway_resource.level2_resources,
-    aws_api_gateway_resource.level3_resources
+    aws_api_gateway_resource.root,
+    aws_api_gateway_resource.child
   )
 }
 
