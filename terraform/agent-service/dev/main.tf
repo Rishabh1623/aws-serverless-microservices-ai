@@ -55,9 +55,11 @@ locals {
 # LAMBDA DEPLOYMENT PACKAGE
 # ============================================================================
 
+# Use pre-built package with dependencies
+# Build using: bash scripts/build-agent-lambda.sh
 data "archive_file" "agent" {
   type        = "zip"
-  source_dir  = "${path.module}/../../../agent-service/src/agent_handler"
+  source_file = "${path.module}/../../../agent-service/build/agent-service-lambda.zip"
   output_path = "${path.module}/lambda_packages/agent-service.zip"
 }
 
