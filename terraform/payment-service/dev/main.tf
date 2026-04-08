@@ -94,17 +94,8 @@ module "payment_service" {
     payments = {
       path_part = "payments"
     }
-    payment_id = {
-      path_part  = "{paymentId}"
-      parent_key = "payments"
-    }
-    payment_refund = {
-      path_part  = "refund"
-      parent_key = "payment_id"
-    }
     webhook = {
-      path_part  = "webhook"
-      parent_key = "payments"
+      path_part = "webhook"
     }
   }
 
@@ -115,13 +106,13 @@ module "payment_service" {
       lambda_key   = "process-payment"
     }
     get_payment = {
-      resource_key = "payment_id"
+      resource_key = "payments"
       http_method  = "GET"
       lambda_key   = "get-payment"
     }
     refund_payment = {
-      resource_key = "payment_refund"
-      http_method  = "POST"
+      resource_key = "payments"
+      http_method  = "DELETE"
       lambda_key   = "refund-payment"
     }
     stripe_webhook = {

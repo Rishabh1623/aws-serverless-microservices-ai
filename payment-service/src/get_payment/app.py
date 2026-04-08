@@ -18,7 +18,16 @@ def lambda_handler(event, context):
     GET /payments/{paymentId}
     """
     try:
-        payment_id = event['pathParameters']['paymentId']        
+        # Get paymentId from query parameters
+        payment_id = event.get('queryStringParameters', {}).get('paymentId')
+        
+        if not payment_id:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'paymentId query parameter is required'})
+            }
+        
         response = payments_table.get_item(Key={'paymentId': payment_id})
         
         if 'Item' not in response:

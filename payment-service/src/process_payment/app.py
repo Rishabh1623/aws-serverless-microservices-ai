@@ -138,7 +138,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('ProcessPayment', duration, float(amount))        xray_recorder.put_metadata('amount', str(amount))
+        publish_metrics('ProcessPayment', duration, float(amount))
         
         return {
             'statusCode': 201,

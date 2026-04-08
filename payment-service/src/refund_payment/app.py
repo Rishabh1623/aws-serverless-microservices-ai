@@ -32,7 +32,16 @@ def lambda_handler(event, context):
     start_time = datetime.now()
     
     try:        
-        payment_id = event['pathParameters']['paymentId']
+        # Get paymentId from query parameters
+        payment_id = event.get('queryStringParameters', {}).get('paymentId')
+        
+        if not payment_id:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'paymentId query parameter is required'})
+            }
+        
         body = json.loads(event['body'])
         
         reason = body.get('reason', 'Customer requested')
@@ -112,7 +121,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('RefundPayment', duration, float(refund_amount))        xray_recorder.put_metadata('refund_amount', str(refund_amount))
+        publish_metrics('RefundPayment', duration, float(refund_amount))
         
         return {
             'statusCode': 200,
