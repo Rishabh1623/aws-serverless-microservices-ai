@@ -99,7 +99,7 @@ def lambda_handler(event, context):
         
         # Publish metrics
         duration = (datetime.now() - start_time).total_seconds() * 1000
-        publish_metrics('AddToCart', duration, float(total_price))        xray_recorder.put_metadata('total_price', str(total_price))
+        publish_metrics('AddToCart', duration, float(total_price))
         
         return {
             'statusCode': 201,
@@ -124,7 +124,7 @@ def lambda_handler(event, context):
         }
     
     except Exception as e:
-        print(f"Error adding to cart: {str(e)}")        xray_recorder.put_metadata('error_message', str(e))
+        print(f"Error adding to cart: {str(e)}")
         
         return {
             'statusCode': 500,
