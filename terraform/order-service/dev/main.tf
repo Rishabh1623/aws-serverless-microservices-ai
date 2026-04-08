@@ -92,22 +92,6 @@ module "order_service" {
     orders = {
       path_part = "orders"
     }
-    order_id = {
-      path_part  = "{orderId}"
-      parent_key = "orders"
-    }
-    order_cancel = {
-      path_part  = "cancel"
-      parent_key = "order_id"
-    }
-    orders_user = {
-      path_part  = "user"
-      parent_key = "orders"
-    }
-    user_id = {
-      path_part  = "{userId}"
-      parent_key = "orders_user"
-    }
   }
 
   api_gateway_methods = {
@@ -117,17 +101,17 @@ module "order_service" {
       lambda_key   = "create-order"
     }
     get_order = {
-      resource_key = "order_id"
+      resource_key = "orders"
       http_method  = "GET"
       lambda_key   = "get-order"
     }
     list_user_orders = {
-      resource_key = "user_id"
+      resource_key = "orders"
       http_method  = "GET"
       lambda_key   = "list-user-orders"
     }
     cancel_order = {
-      resource_key = "order_cancel"
+      resource_key = "orders"
       http_method  = "PATCH"
       lambda_key   = "cancel-order"
     }

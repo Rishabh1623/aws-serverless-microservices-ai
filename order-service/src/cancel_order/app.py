@@ -18,11 +18,20 @@ def lambda_handler(event, context):
     """
     Cancel order
     
-    PATCH /orders/{orderId}/cancel
+    PATCH /orders?orderId=xxx
     Body: {"reason": "Changed plans"}
     """
     try:
-        order_id = event['pathParameters']['orderId']
+        # Get orderId from query parameters
+        order_id = event.get('queryStringParameters', {}).get('orderId')
+        
+        if not order_id:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'orderId query parameter is required'})
+            }
+        
         body = json.loads(event.get('body', '{}'))
         reason = body.get('reason', 'Customer requested')        
         # Get order

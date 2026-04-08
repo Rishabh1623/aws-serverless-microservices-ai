@@ -16,12 +16,18 @@ def lambda_handler(event, context):
     """
     List user's orders
     
-    GET /orders/user/{userId}
-    Query params: ?status=confirmed&limit=10
+    GET /orders?userId=xxx&status=confirmed&limit=10
     """
     try:
-        user_id = event['pathParameters']['userId']
         params = event.get('queryStringParameters') or {}
+        user_id = params.get('userId')
+        
+        if not user_id:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'userId query parameter is required'})
+            }
         
         status_filter = params.get('status')
         limit = int(params.get('limit', 50))        
@@ -49,8 +55,6 @@ def lambda_handler(event, context):
             for item in order.get('items', []):
                 item['pricePerNight'] = float(item.get('pricePerNight', 0))
                 item['totalPrice'] = float(item.get('totalPrice', 0))
-        
-        xray_recorder.put_metadata('orders_count', len(orders))
         
         return {
             'statusCode': 200,

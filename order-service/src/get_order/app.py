@@ -15,10 +15,19 @@ def lambda_handler(event, context):
     """
     Get order details
     
-    GET /orders/{orderId}
+    GET /orders?orderId=xxx
     """
     try:
-        order_id = event['pathParameters']['orderId']        
+        # Get orderId from query parameters
+        order_id = event.get('queryStringParameters', {}).get('orderId')
+        
+        if not order_id:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'orderId query parameter is required'})
+            }
+        
         # Get order
         response = orders_table.get_item(Key={'orderId': order_id})
         
