@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     """
     Cancel order
     
-    PATCH /orders?orderId=xxx
+    DELETE /orders?orderId=xxx
     Body: {"reason": "Changed plans"}
     """
     try:

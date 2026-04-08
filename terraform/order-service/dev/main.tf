@@ -100,19 +100,14 @@ module "order_service" {
       http_method  = "POST"
       lambda_key   = "create-order"
     }
-    get_order = {
-      resource_key = "orders"
-      http_method  = "GET"
-      lambda_key   = "get-order"
-    }
-    list_user_orders = {
+    list_orders = {
       resource_key = "orders"
       http_method  = "GET"
       lambda_key   = "list-user-orders"
     }
     cancel_order = {
       resource_key = "orders"
-      http_method  = "PATCH"
+      http_method  = "DELETE"
       lambda_key   = "cancel-order"
     }
   }
