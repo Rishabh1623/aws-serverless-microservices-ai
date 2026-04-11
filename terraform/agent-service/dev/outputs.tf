@@ -5,12 +5,12 @@ output "api_gateway_url" {
 
 output "lambda_function_name" {
   description = "Agent Lambda function name"
-  value       = aws_lambda_function.agent.function_name
+  value       = aws_lambda_function.agent_package.function_name
 }
 
 output "lambda_function_arn" {
   description = "Agent Lambda function ARN"
-  value       = aws_lambda_function.agent.arn
+  value       = aws_lambda_function.agent_package.arn
 }
 
 output "cloudwatch_log_group" {

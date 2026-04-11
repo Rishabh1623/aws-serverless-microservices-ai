@@ -184,6 +184,35 @@ echo "Agent API: $AGENT_API"
 
 ---
 
+### Step 6b: Deploy Durable Function (Optional - Advanced)
+
+This is an alternative to the EventBridge-based booking flow using AWS Lambda Durable Functions.
+
+```bash
+# Install Lambda dependencies first
+cd ../../hotel-service/src/booking_orchestrator
+pip install -r requirements.txt -t .
+
+# Deploy with Terraform
+cd ../../../terraform/hotel-service-durable
+terraform init
+terraform apply
+
+# Save API URL
+export DURABLE_API=$(terraform output -raw api_endpoint)
+echo "Durable Function API: $DURABLE_API"
+```
+
+**What it creates**:
+- 1 Lambda Durable Function (orchestrates entire booking workflow)
+- API Gateway integration
+- Automatic state management and retries
+- Long-running workflow support (up to 1 year)
+
+**See**: [DURABLE_FUNCTIONS_GUIDE.md](DURABLE_FUNCTIONS_GUIDE.md) for details
+
+---
+
 ### Step 7: Add Sample Data
 
 ```bash
@@ -529,4 +558,4 @@ You now have a **production-ready serverless travel booking platform** with:
 **Total deployment time**: ~30 minutes
 **Total services**: 5 microservices, 17 Lambda functions
 
-🎉 **Ready to deploy!**
+🎉 **Ready to d

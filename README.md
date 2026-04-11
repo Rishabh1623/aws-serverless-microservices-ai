@@ -418,6 +418,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - [Complete Deployment Guide](DEPLOY.md) - Step-by-step deployment
 - [Getting Started](GETTING_STARTED.md) - Quick start guide
 - [Project Structure](PROJECT_STRUCTURE.md) - Architecture details
+- [Durable Functions Guide](DURABLE_FUNCTIONS_GUIDE.md) - AWS Lambda Durable Functions implementation
 
 ---
 

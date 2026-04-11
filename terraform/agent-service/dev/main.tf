@@ -56,48 +56,22 @@ locals {
 # ============================================================================
 
 # Use pre-built package with dependencies
-# Build using: bash scripts/build-agent-lambda.sh
-data "archive_file" "agent" {
-  type        = "zip"
-  source_file = "${path.module}/../../../agent-service/build/agent-service-lambda.zip"
-  output_path = "${path.module}/lambda_packages/agent-service.zip"
-}
-
-# ============================================================================
-# SECRETS MANAGER
-# ============================================================================
-
-module "secrets" {
-  source = "../../modules/secrets-manager"
-
-  service_name = local.service_name
-  environment  = local.environment
-
-  secrets = {
-    bedrock_config = jsonencode({
-      model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
-      region   = var.aws_region
-    })
-    api_endpoints = jsonencode({
-      hotel_api_url   = local.hotel_api_url
-      cart_api_url    = local.cart_api_url
-      order_api_url   = local.order_api_url
-      payment_api_url = local.payment_api_url
-    })
+# Build using: cd agent-service && bash build-lambda.sh
+resource "null_resource" "check_lambda_package" {
+  provisioner "local-exec" {
+    command = "test -f ${path.module}/../../../agent-service/agent-service-lambda.zip || (echo 'ERROR: Lambda package not found. Run: cd agent-service && bash build-lambda.sh' && exit 1)"
   }
 }
 
-# ============================================================================
-# LAMBDA FUNCTION - AI TRAVEL AGENT
-# ============================================================================
-
-resource "aws_lambda_function" "agent" {
+resource "aws_lambda_function" "agent_package" {
+  depends_on = [null_resource.check_lambda_package]
+  
   function_name = "${local.service_name}-${local.environment}"
   description   = "AI Travel Assistant using Strands Agents SDK and Bedrock"
 
   # Deployment package
-  filename         = data.archive_file.agent.output_path
-  source_code_hash = data.archive_file.agent.output_base64sha256
+  filename         = "${path.module}/../../../agent-service/agent-service-lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../../agent-service/agent-service-lambda.zip")
 
   # Runtime configuration
   runtime = "python3.11"
@@ -128,6 +102,32 @@ resource "aws_lambda_function" "agent" {
     mode = "Active" # Enable X-Ray tracing
   }
 }
+
+# ============================================================================
+# SECRETS MANAGER
+# ============================================================================
+
+module "secrets" {
+  source = "../../modules/secrets-manager"
+
+  service_name = local.service_name
+  environment  = local.environment
+
+  secrets = {
+    bedrock_config = jsonencode({
+      model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+      region   = var.aws_region
+    })
+    api_endpoints = jsonencode({
+      hotel_api_url   = local.hotel_api_url
+      cart_api_url    = local.cart_api_url
+      order_api_url   = local.order_api_url
+      payment_api_url = local.payment_api_url
+    })
+  }
+}
+
+
 
 # ============================================================================
 # IAM ROLE FOR LAMBDA
@@ -193,7 +193,7 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets" {
 # ============================================================================
 
 resource "aws_cloudwatch_log_group" "agent" {
-  name              = "/aws/lambda/${aws_lambda_function.agent.function_name}"
+  name              = "/aws/lambda/${aws_lambda_function.agent_package.function_name}"
   retention_in_days = 7 # Keep logs for 7 days (cost optimization)
 }
 
@@ -252,7 +252,7 @@ resource "aws_apigatewayv2_integration" "agent" {
   api_id           = aws_apigatewayv2_api.agent.id
   integration_type = "AWS_PROXY"
 
-  integration_uri        = aws_lambda_function.agent.invoke_arn
+  integration_uri        = aws_lambda_function.agent_package.invoke_arn
   integration_method     = "POST"
   payload_format_version = "2.0"
 }
@@ -268,7 +268,7 @@ resource "aws_apigatewayv2_route" "agent" {
 resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.agent.function_name
+  function_name = aws_lambda_function.agent_package.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.agent.execution_arn}/*/*"
 }
@@ -290,7 +290,7 @@ resource "aws_cloudwatch_metric_alarm" "agent_errors" {
   alarm_description   = "Agent Lambda function error rate is high"
 
   dimensions = {
-    FunctionName = aws_lambda_function.agent.function_name
+    FunctionName = aws_lambda_function.agent_package.function_name
   }
 }
 
@@ -307,7 +307,7 @@ resource "aws_cloudwatch_metric_alarm" "agent_duration" {
   alarm_description   = "Agent Lambda function duration is high"
 
   dimensions = {
-    FunctionName = aws_lambda_function.agent.function_name
+    FunctionName = aws_lambda_function.agent_package.function_name
   }
 }
 
@@ -324,6 +324,6 @@ resource "aws_cloudwatch_metric_alarm" "bedrock_throttles" {
   alarm_description   = "Bedrock API is being throttled"
 
   dimensions = {
-    FunctionName = aws_lambda_function.agent.function_name
+    FunctionName = aws_lambda_function.agent_package.function_name
   }
 }
