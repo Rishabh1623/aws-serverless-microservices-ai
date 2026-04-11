@@ -59,27 +59,31 @@ This document summarizes all durable function implementations in the travel plat
 
 ---
 
-### 3. ⏳ Payment Processing Orchestrator (Next)
+### 3. ✅ Payment Processing Orchestrator
 
-**Location:** `payment-service/src/payment_orchestrator/` (to be created)
-**Terraform:** `terraform/payment-service-durable/` (to be created)
-**Status:** Planned
+**Location:** `payment-service/src/payment_orchestrator/`
+**Terraform:** `terraform/payment-service-durable/`
+**Status:** Implemented
 
-**Planned Workflow:**
+**Workflow:**
 1. Validate payment request
-2. Get Stripe API key from Secrets Manager
-3. Create Stripe payment intent
-4. Handle 3D Secure authentication (wait for user)
-5. Confirm payment
-6. Update order status
-7. Send receipt email
-8. Handle refunds with compensation
+2. Verify order exists
+3. Get Stripe API key from Secrets Manager
+4. Create Stripe Payment Intent (with retries)
+5. Handle 3D Secure authentication (wait for user)
+6. Confirm payment (with retries)
+7. Save payment record
+8. Update order status
+9. Send receipt email
 
 **Key Features:**
-- Stripe integration with retries
-- 3D Secure support (wait for user action)
-- Refund workflow orchestration
-- Automatic receipt generation
+- Automatic payment retries (up to 3 times)
+- 3D Secure support with automatic wait
+- Stripe Payment Intent API integration
+- Automatic rollback on authentication failure
+- Email receipts with payment details
+
+**Deployment:** See [PAYMENT_ORCHESTRATOR_DEPLOYMENT.md](PAYMENT_ORCHESTRATOR_DEPLOYMENT.md)
 
 ---
 
