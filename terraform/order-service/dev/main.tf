@@ -106,7 +106,6 @@ module "order_service" {
         TEMPLATE_NAME       = "order-confirmation-${var.environment}"
         STRIPE_SECRET_NAME  = "travel-platform-stripe-key-${var.environment}"
         ENVIRONMENT         = var.environment
-        AWS_LAMBDA_EXEC_WRAPPER = "/opt/bootstrap"
       }
     }
   }

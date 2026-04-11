@@ -107,7 +107,6 @@ module "payment_service" {
         RECEIPT_TEMPLATE    = "payment-receipt-${var.environment}"
         STRIPE_SECRET_NAME  = "${var.service_name}-stripe-${var.environment}"
         ENVIRONMENT         = var.environment
-        AWS_LAMBDA_EXEC_WRAPPER = "/opt/bootstrap"
       }
     }
   }

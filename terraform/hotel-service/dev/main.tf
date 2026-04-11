@@ -112,7 +112,6 @@ module "hotel_service" {
         FROM_EMAIL          = module.ses_notifications.from_email_address
         TEMPLATE_NAME       = module.ses_notifications.booking_confirmation_template
         ENVIRONMENT         = var.environment
-        AWS_LAMBDA_EXEC_WRAPPER = "/opt/bootstrap"
       }
     }
   }
