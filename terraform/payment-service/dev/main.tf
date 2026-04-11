@@ -28,6 +28,12 @@ data "archive_file" "stripe_webhook" {
   output_path = "${path.module}/lambda_packages/stripe_webhook.zip"
 }
 
+data "archive_file" "payment_orchestrator" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../payment-service/src/payment_orchestrator"
+  output_path = "${path.module}/lambda_packages/payment_orchestrator.zip"
+}
+
 # ============================================================================
 # PAYMENT SERVICE MODULE
 # ============================================================================
@@ -88,6 +94,22 @@ module "payment_service" {
         ENVIRONMENT    = var.environment
       }
     }
+    payment-orchestrator = {
+      filename    = data.archive_file.payment_orchestrator.output_path
+      handler     = "app.lambda_handler"
+      runtime     = var.lambda_runtime
+      memory_size = 1024
+      timeout     = 900
+      environment_variables = {
+        PAYMENTS_TABLE      = "${var.service_name}-payments-${var.environment}"
+        ORDERS_TABLE        = "order-service-orders-${var.environment}"
+        FROM_EMAIL          = "payments@travel-platform.com"
+        RECEIPT_TEMPLATE    = "payment-receipt-${var.environment}"
+        STRIPE_SECRET_NAME  = "${var.service_name}-stripe-${var.environment}"
+        ENVIRONMENT         = var.environment
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/bootstrap"
+      }
+    }
   }
 
   api_gateway_resources = {
@@ -119,6 +141,11 @@ module "payment_service" {
       resource_key = "webhook"
       http_method  = "POST"
       lambda_key   = "stripe-webhook"
+    }
+    process_payment_orchestrated = {
+      resource_key = "payments"
+      http_method  = "PUT"
+      lambda_key   = "payment-orchestrator"
     }
   }
 
@@ -223,6 +250,45 @@ resource "aws_iam_role_policy" "lambda_orders_access" {
           "dynamodb:UpdateItem"
         ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/order-service-orders-${var.environment}"
+      }
+    ]
+  })
+}
+
+# ============================================================================
+# DURABLE FUNCTION CONFIGURATION
+# ============================================================================
+
+# Enable durable execution for payment orchestrator
+resource "aws_lambda_function_event_invoke_config" "payment_orchestrator" {
+  function_name = module.payment_service.lambda_functions["payment-orchestrator"].function_name
+
+  maximum_event_age_in_seconds = 21600  # 6 hours
+  maximum_retry_attempts       = 2
+}
+
+# Grant additional permissions for orchestrator
+resource "aws_iam_role_policy" "orchestrator_permissions" {
+  name = "${var.service_name}-orchestrator-permissions-${var.environment}"
+  role = module.payment_service.lambda_roles["payment-orchestrator"].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendTemplatedEmail"
+        ]
+        Resource = "*"
       }
     ]
   })

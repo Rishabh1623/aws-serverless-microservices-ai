@@ -28,6 +28,12 @@ data "archive_file" "booking_notification" {
   output_path = "${path.module}/lambda_packages/booking_notification.zip"
 }
 
+data "archive_file" "booking_orchestrator" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../hotel-service/src/booking_orchestrator"
+  output_path = "${path.module}/lambda_packages/booking_orchestrator.zip"
+}
+
 # ============================================================================
 # HOTEL SERVICE MODULE
 # ============================================================================
@@ -92,6 +98,23 @@ module "hotel_service" {
         ENVIRONMENT           = var.environment
       }
     }
+    booking-orchestrator = {
+      filename    = data.archive_file.booking_orchestrator.output_path
+      handler     = "app.lambda_handler"
+      runtime     = var.lambda_runtime
+      memory_size = 1024
+      timeout     = 900
+      environment_variables = {
+        BOOKING_TABLE       = "${var.service_name}-bookings-${var.environment}"
+        ROOM_TABLE          = "${var.service_name}-rooms-${var.environment}"
+        HOTEL_TABLE         = "${var.service_name}-hotels-${var.environment}"
+        IDEMPOTENCY_TABLE   = "${var.service_name}-idempotency-${var.environment}"
+        FROM_EMAIL          = module.ses_notifications.from_email_address
+        TEMPLATE_NAME       = module.ses_notifications.booking_confirmation_template
+        ENVIRONMENT         = var.environment
+        AWS_LAMBDA_EXEC_WRAPPER = "/opt/bootstrap"
+      }
+    }
   }
 
   api_gateway_resources = {
@@ -122,6 +145,11 @@ module "hotel_service" {
       resource_key = "bookings"
       http_method  = "POST"
       lambda_key   = "create-booking"
+    }
+    create_booking_orchestrated = {
+      resource_key = "bookings"
+      http_method  = "PUT"
+      lambda_key   = "booking-orchestrator"
     }
   }
 
@@ -342,4 +370,35 @@ resource "aws_lambda_permission" "eventbridge_invoke" {
   function_name = module.hotel_service.lambda_functions["booking-notification"].function_name
   principal     = "events.amazonaws.com"
   source_arn    = "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:rule/${module.event_driven.event_bus_name}/${var.service_name}-${var.environment}-booking-events"
+}
+
+# ============================================================================
+# DURABLE FUNCTION CONFIGURATION
+# ============================================================================
+
+# Enable durable execution for booking orchestrator
+resource "aws_lambda_function_event_invoke_config" "booking_orchestrator" {
+  function_name = module.hotel_service.lambda_functions["booking-orchestrator"].function_name
+
+  maximum_event_age_in_seconds = 21600  # 6 hours
+  maximum_retry_attempts       = 2
+}
+
+# Grant CloudWatch metrics permissions for orchestrator
+resource "aws_iam_role_policy" "orchestrator_cloudwatch" {
+  name = "${var.service_name}-orchestrator-cloudwatch-${var.environment}"
+  role = module.hotel_service.lambda_roles["booking-orchestrator"].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
