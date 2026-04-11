@@ -39,6 +39,12 @@ variable "project_name" {
   default     = "travel-platform"
 }
 
+variable "api_gateway_id" {
+  description = "API Gateway ID for integration (optional - leave empty to skip API Gateway integration)"
+  type        = string
+  default     = ""
+}
+
 # Data sources
 data "aws_dynamodb_table" "orders" {
   name = "${var.project_name}-orders-${var.environment}"
@@ -181,9 +187,11 @@ resource "aws_iam_role_policy" "cloudwatch_access" {
   })
 }
 
-# API Gateway integration
+# API Gateway integration (optional)
 resource "aws_apigatewayv2_integration" "order_orchestrator" {
-  api_id           = data.aws_apigatewayv2_api.main.id
+  count = var.api_gateway_id != "" ? 1 : 0
+
+  api_id           = var.api_gateway_id
   integration_type = "AWS_PROXY"
 
   integration_uri    = module.order_orchestrator.invoke_arn
@@ -191,24 +199,24 @@ resource "aws_apigatewayv2_integration" "order_orchestrator" {
   payload_format_version = "2.0"
 }
 
-data "aws_apigatewayv2_api" "main" {
-  name = "${var.project_name}-api-${var.environment}"
-}
-
 # API Gateway route
 resource "aws_apigatewayv2_route" "order_orchestrator" {
-  api_id    = data.aws_apigatewayv2_api.main.id
+  count = var.api_gateway_id != "" ? 1 : 0
+
+  api_id    = var.api_gateway_id
   route_key = "POST /orders/orchestrated"
-  target    = "integrations/${aws_apigatewayv2_integration.order_orchestrator.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.order_orchestrator[0].id}"
 }
 
 # Lambda permission for API Gateway
 resource "aws_lambda_permission" "api_gateway" {
+  count = var.api_gateway_id != "" ? 1 : 0
+
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = module.order_orchestrator.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${data.aws_apigatewayv2_api.main.execution_arn}/*/*"
+  source_arn    = "arn:aws:execute-api:${var.aws_region}:*:${var.api_gateway_id}/*/*"
 }
 
 # Outputs
@@ -223,6 +231,6 @@ output "function_name" {
 }
 
 output "api_endpoint" {
-  description = "API endpoint for orchestrated orders"
-  value       = "${data.aws_apigatewayv2_api.main.api_endpoint}/orders/orchestrated"
+  description = "API endpoint for orchestrated orders (empty if API Gateway not configured)"
+  value       = var.api_gateway_id != "" ? "https://${var.api_gateway_id}.execute-api.${var.aws_region}.amazonaws.com/orders/orchestrated" : "Not configured - invoke Lambda directly"
 }

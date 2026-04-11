@@ -1,147 +1,109 @@
-# API Gateway Resource Hierarchy Fix
+# API Gateway Integration Fix
 
-## Problem Summary
-
-The Cart Service API Gateway has stale resources in Terraform state causing incorrect path structure:
-
-**Current (Incorrect):**
+## Issue
+The durable function Terraform configurations had an error when trying to look up API Gateway by name:
 ```
-/cart
-/remove
-/{userId}
-/items
-/apply
-/add
-/
-/promo
-```
+Error: Missing required argument
+  on main.tf line 178, in data "aws_apigatewayv2_api" "main":
+ 178: data "aws_apigatewayv2_api" "main" {
 
-**Expected (Correct):**
-```
-/
-/cart
-/cart/{userId}
-/items
-/promo
+The argument "api_id" is required, but no definition was found.
 ```
 
 ## Root Cause
-
-The Terraform state contains old resource definitions (`items_add`, `items_remove`, `promo_apply`) that no longer exist in the configuration. These were likely from an earlier version where each endpoint had its own resource path.
-
-The current configuration correctly defines:
-- `/cart/{userId}` - GET cart by user
-- `/items` - POST (add) and DELETE (remove) operations
-- `/promo` - POST apply promo code
-
-Multiple HTTP methods should be on the same resource, not separate paths.
+The `aws_apigatewayv2_api` data source doesn't support lookup by `name` - it requires `api_id` to be provided.
 
 ## Solution
+Made API Gateway integration **optional** in all three durable function deployments:
+- `terraform/hotel-service-durable/main.tf`
+- `terraform/order-service-durable/main.tf`
+- `terraform/payment-service-durable/main.tf`
 
-Destroy and recreate the cart service to clear stale state.
+### Changes Made
+1. Added `api_gateway_id` variable (defaults to empty string)
+2. Made API Gateway resources conditional using `count`
+3. Updated outputs to show "Not configured" when API Gateway is skipped
 
-### Step 1: Run the Fix Script
+## Deployment
 
+### Option 1: Deploy Without API Gateway (Recommended for Initial Setup)
 ```bash
-cd ~/aws-serverless-microservices-ai
-chmod +x scripts/fix-cart-api-gateway.sh
-./scripts/fix-cart-api-gateway.sh
+cd terraform/hotel-service-durable
+terraform init
+terraform plan
+terraform apply
 ```
 
-### Step 2: Verify the Fix
+The Lambda functions will be created and can be invoked directly via AWS SDK or CLI.
 
-After running the script, verify the API structure:
-
-```bash
-cd ~/aws-serverless-microservices-ai/terraform/cart-service/dev
-
-# Get API ID
-export API_ID=$(aws apigateway get-rest-apis --query "items[?name=='cart-service-dev'].id" --output text)
-
-# Check resources
-aws apigateway get-resources --rest-api-id $API_ID --query 'items[*].[path,id]' --output table
-
-# Check methods on each resource
-aws apigateway get-resources --rest-api-id $API_ID --query 'items[*].[path,resourceMethods]' --output json
-```
-
-Expected output should show:
-- `/cart/{userId}` with GET method
-- `/items` with POST and DELETE methods
-- `/promo` with POST method
-
-### Step 3: Test the API
+### Option 2: Deploy With API Gateway Integration
+If you have an existing API Gateway v2 HTTP API, provide its ID:
 
 ```bash
-API_URL=$(cd ~/aws-serverless-microservices-ai/terraform/cart-service/dev && terraform output -raw api_gateway_url)
-
-# Test GET cart
-curl "$API_URL/cart/user-123"
-
-# Test POST add to cart
-curl -X POST "$API_URL/items" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "user-123",
-    "hotelId": "hotel-paris-001",
-    "checkIn": "2026-06-01",
-    "checkOut": "2026-06-05",
-    "guests": 2,
-    "roomType": "deluxe"
-  }'
-
-# Test DELETE remove from cart
-curl -X DELETE "$API_URL/items" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "user-123",
-    "cartItemId": "CART_ITEM_ID_FROM_PREVIOUS_RESPONSE"
-  }'
-
-# Test POST apply promo
-curl -X POST "$API_URL/promo" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "user-123",
-    "promoCode": "SAVE10"
-  }'
+cd terraform/hotel-service-durable
+terraform init
+terraform plan -var="api_gateway_id=abc123xyz"
+terraform apply -var="api_gateway_id=abc123xyz"
 ```
 
-## Why This Happened
-
-The Terraform state got out of sync with the configuration. This can happen when:
-1. Configuration is changed without proper state migration
-2. Manual AWS console changes conflict with Terraform
-3. Failed `terraform state rm` commands (as seen in the user's terminal)
-
-## Prevention
-
-To avoid this in the future:
-1. Always use `terraform plan` before `apply` to review changes
-2. Use `terraform state list` to verify state matches configuration
-3. For major structural changes, consider `terraform destroy` and recreate
-4. Never manually modify AWS resources managed by Terraform
-
-## Module Logic Verification
-
-The lambda-service module correctly implements 3-level resource hierarchy:
-
+Or create a `terraform.tfvars` file:
 ```hcl
-# Level 1: Root resources (no parent_key)
-root_level_resources = resources where parent_key == null
-
-# Level 2: Children of root (parent_key points to root resource)
-level2_resources = resources where parent_key exists in root_level_resources
-
-# Level 3: Children of level 2 (parent_key points to level2 resource)
-level3_resources = resources where parent_key exists in level2_resources
+api_gateway_id = "abc123xyz"
 ```
 
-This logic is sound and working correctly in the hotel-service.
+## Invoking Durable Functions
 
-## Next Steps After Fix
+### Direct Lambda Invocation (No API Gateway)
+```bash
+aws lambda invoke \
+  --function-name travel-platform-booking-orchestrator-dev \
+  --payload '{"hotelId":"hotel-123","roomId":"room-456","userId":"user-789","checkIn":"2026-05-01","checkOut":"2026-05-05"}' \
+  response.json
+```
 
-1. Apply the same fix to order-service and payment-service if they have similar issues
-2. Test all cart service endpoints thoroughly
-3. Move on to fixing the agent-service Lambda packaging issue
-4. Complete end-to-end testing of the entire microservices architecture
+### Via API Gateway (If Configured)
+```bash
+curl -X POST https://abc123xyz.execute-api.us-east-1.amazonaws.com/bookings/orchestrated \
+  -H "Content-Type: application/json" \
+  -d '{"hotelId":"hotel-123","roomId":"room-456","userId":"user-789","checkIn":"2026-05-01","checkOut":"2026-05-05"}'
+```
+
+## Why This Approach?
+
+1. **Simpler Initial Deployment**: No need to create or reference API Gateway
+2. **Flexibility**: Each service can use its own API Gateway or share one
+3. **Direct Invocation**: Durable functions can be called from other services via Lambda SDK
+4. **Optional Integration**: Add API Gateway later when needed
+
+## Next Steps
+
+1. Deploy all three durable functions without API Gateway:
+   ```bash
+   # Hotel service
+   cd terraform/hotel-service-durable
+   terraform init && terraform apply -auto-approve
+   
+   # Order service
+   cd ../order-service-durable
+   terraform init && terraform apply -auto-approve
+   
+   # Payment service
+   cd ../payment-service-durable
+   terraform init && terraform apply -auto-approve
+   ```
+
+2. Test Lambda functions directly using AWS CLI or SDK
+
+3. (Optional) Create a shared API Gateway and integrate all services:
+   ```bash
+   # Create API Gateway v2 HTTP API
+   aws apigatewayv2 create-api \
+     --name travel-platform-api-dev \
+     --protocol-type HTTP
+   
+   # Get the API ID and update terraform.tfvars
+   # Then re-apply with api_gateway_id variable
+   ```
+
+## Commit
+Fixed API Gateway data source error by making integration optional. All durable functions can now be deployed without requiring an existing API Gateway.
