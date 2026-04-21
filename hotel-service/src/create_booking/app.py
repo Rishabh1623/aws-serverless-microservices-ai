@@ -36,13 +36,17 @@ def lambda_handler(event, context):
     """
     Create hotel booking with DynamoDB transactions
     
-    Features:
-    - Atomic booking creation + room availability update
-    - Idempotency (prevents duplicate bookings)
-    - EventBridge event publishing
-    - Race condition prevention
+    Supports two invocation modes:
+    1. API Gateway (HTTP request with 'body' field)
+    2. Step Functions workflow (direct invocation with 'action' field)
     
-    Body:
+    Workflow Actions:
+    - validate: Validate booking request
+    - create: Create booking record
+    - payment: Process payment
+    - rollback: Cancel booking
+    
+    API Gateway Body:
     {
         "userId": "user123",
         "hotelId": "hotel-001",
@@ -62,6 +66,11 @@ def lambda_handler(event, context):
     start_time = datetime.now()
     
     try:
+        # Check if this is a Step Functions workflow action
+        if 'action' in event:
+            return handle_workflow_action(event, context)
+        
+        # Otherwise, handle as API Gateway request
         body = json.loads(event['body'])
         
         # Extract fields
@@ -299,3 +308,206 @@ def check_availability(room_id: str, check_in: str, check_out: str) -> bool:
     except Exception as e:
         print(f"Error checking availability: {str(e)}")
         return False
+
+def handle_workflow_action(event, context):
+    """
+    Handle Step Functions workflow actions
+    
+    Actions:
+    - validate: Validate booking request
+    - create: Create booking record  
+    - payment: Process payment (placeholder)
+    - rollback: Cancel booking
+    """
+    action = event.get('action')
+    booking_data = event.get('booking', event)
+    
+    print(f"Workflow action: {action}")
+    print(f"Booking data: {json.dumps(booking_data, default=str)}")
+    
+    if action == 'validate':
+        return validate_booking_request(booking_data)
+    elif action == 'create':
+        return create_booking_workflow(booking_data)
+    elif action == 'payment':
+        return process_payment_workflow(booking_data)
+    elif action == 'rollback':
+        return rollback_booking_workflow(booking_data)
+    else:
+        raise ValueError(f"Unknown workflow action: {action}")
+
+def validate_booking_request(booking_data):
+    """Validate booking request data"""
+    try:
+        # Required fields
+        required_fields = ['hotelId', 'roomId', 'userId', 'checkIn', 'checkOut']
+        missing_fields = [f for f in required_fields if f not in booking_data]
+        
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+        
+        # Validate dates
+        from datetime import datetime as dt
+        check_in = dt.strptime(booking_data['checkIn'], '%Y-%m-%d')
+        check_out = dt.strptime(booking_data['checkOut'], '%Y-%m-%d')
+        
+        if check_out <= check_in:
+            raise ValueError("Check-out date must be after check-in date")
+        
+        if check_in < dt.now():
+            raise ValueError("Check-in date cannot be in the past")
+        
+        # Check room exists
+        room_response = rooms_table.get_item(Key={'roomId': booking_data['roomId']})
+        if 'Item' not in room_response:
+            raise ValueError(f"Room not found: {booking_data['roomId']}")
+        
+        return {
+            'statusCode': 200,
+            'valid': True,
+            'message': 'Booking request is valid'
+        }
+        
+    except ValueError as e:
+        print(f"Validation error: {str(e)}")
+        raise Exception(f"ValidationError: {str(e)}")
+    except Exception as e:
+        print(f"Validation error: {str(e)}")
+        raise Exception(f"ValidationError: {str(e)}")
+
+def create_booking_workflow(booking_data):
+    """Create booking for workflow"""
+    try:
+        # Extract fields
+        user_id = booking_data['userId']
+        hotel_id = booking_data['hotelId']
+        room_id = booking_data['roomId']
+        check_in = booking_data['checkIn']
+        check_out = booking_data['checkOut']
+        guests = booking_data.get('guests', 1)
+        special_requests = booking_data.get('specialRequests', '')
+        guest_details = booking_data.get('guestDetails', {
+            'name': booking_data.get('guestName', 'Guest'),
+            'email': booking_data.get('guestEmail', '')
+        })
+        
+        # Get room details for pricing
+        room_response = rooms_table.get_item(Key={'roomId': room_id})
+        if 'Item' not in room_response:
+            raise Exception(f"Room not found: {room_id}")
+        
+        room = room_response['Item']
+        
+        # Calculate total price
+        from datetime import datetime as dt
+        check_in_date = dt.strptime(check_in, '%Y-%m-%d')
+        check_out_date = dt.strptime(check_out, '%Y-%m-%d')
+        nights = (check_out_date - check_in_date).days
+        
+        base_price = float(room.get('basePrice', 100))
+        total_price = Decimal(str(base_price * nights))
+        
+        # Prepare booking data
+        booking_id = str(uuid.uuid4())
+        created_at = datetime.now().isoformat()
+        
+        booking_item = {
+            'bookingId': booking_id,
+            'userId': user_id,
+            'hotelId': hotel_id,
+            'roomId': room_id,
+            'checkIn': check_in,
+            'checkOut': check_out,
+            'guests': guests,
+            'totalPrice': total_price,
+            'specialRequests': special_requests,
+            'guestDetails': guest_details,
+            'status': 'pending',
+            'createdAt': created_at,
+            'updatedAt': created_at
+        }
+        
+        # Store booking
+        bookings_table.put_item(Item=booking_item)
+        
+        print(f"Created booking: {booking_id}")
+        
+        return {
+            'statusCode': 201,
+            'bookingId': booking_id,
+            'totalPrice': str(total_price),
+            'nights': nights,
+            'createdAt': created_at
+        }
+        
+    except Exception as e:
+        print(f"Error creating booking: {str(e)}")
+        raise Exception(f"BookingCreationError: {str(e)}")
+
+def process_payment_workflow(booking_data):
+    """Process payment for booking (placeholder)"""
+    try:
+        booking_id = booking_data.get('bookingResult', {}).get('Payload', {}).get('bookingId')
+        
+        if not booking_id:
+            raise Exception("Booking ID not found in workflow data")
+        
+        # Update booking status to confirmed
+        bookings_table.update_item(
+            Key={'bookingId': booking_id},
+            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'confirmed',
+                ':updated': datetime.now().isoformat()
+            }
+        )
+        
+        print(f"Payment processed for booking: {booking_id}")
+        
+        return {
+            'statusCode': 200,
+            'paymentStatus': 'success',
+            'bookingId': booking_id
+        }
+        
+    except Exception as e:
+        print(f"Error processing payment: {str(e)}")
+        raise Exception(f"PaymentError: {str(e)}")
+
+def rollback_booking_workflow(booking_data):
+    """Rollback/cancel booking"""
+    try:
+        booking_id = booking_data.get('bookingResult', {}).get('Payload', {}).get('bookingId')
+        
+        if not booking_id:
+            print("No booking ID found, nothing to rollback")
+            return {'statusCode': 200, 'message': 'Nothing to rollback'}
+        
+        # Update booking status to cancelled
+        bookings_table.update_item(
+            Key={'bookingId': booking_id},
+            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'cancelled',
+                ':updated': datetime.now().isoformat()
+            }
+        )
+        
+        print(f"Rolled back booking: {booking_id}")
+        
+        return {
+            'statusCode': 200,
+            'message': 'Booking rolled back successfully',
+            'bookingId': booking_id
+        }
+        
+    except Exception as e:
+        print(f"Error rolling back booking: {str(e)}")
+        # Don't fail rollback
+        return {
+            'statusCode': 200,
+            'message': f'Rollback completed with errors: {str(e)}'
+        }
+
