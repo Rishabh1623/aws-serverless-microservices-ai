@@ -28,12 +28,6 @@ data "archive_file" "cancel_order" {
   output_path = "${path.module}/lambda_packages/cancel_order.zip"
 }
 
-data "archive_file" "order_orchestrator" {
-  type        = "zip"
-  source_dir  = "${path.module}/../../../order-service/src/order_orchestrator"
-  output_path = "${path.module}/lambda_packages/order_orchestrator.zip"
-}
-
 # ============================================================================
 # ORDER SERVICE MODULE
 # ============================================================================
@@ -92,22 +86,6 @@ module "order_service" {
         ENVIRONMENT    = var.environment
       }
     }
-    order-orchestrator = {
-      filename    = data.archive_file.order_orchestrator.output_path
-      handler     = "app.lambda_handler"
-      runtime     = var.lambda_runtime
-      memory_size = 1024
-      timeout     = 900
-      environment_variables = {
-        ORDERS_TABLE        = "${var.service_name}-orders-${var.environment}"
-        CART_TABLE          = "cart-service-carts-${var.environment}"
-        PAYMENTS_TABLE      = "payment-service-payments-${var.environment}"
-        FROM_EMAIL          = "orders@travel-platform.com"
-        TEMPLATE_NAME       = "order-confirmation-${var.environment}"
-        STRIPE_SECRET_NAME  = "travel-platform-stripe-key-${var.environment}"
-        ENVIRONMENT         = var.environment
-      }
-    }
   }
 
   api_gateway_resources = {
@@ -131,11 +109,6 @@ module "order_service" {
       resource_key = "orders"
       http_method  = "DELETE"
       lambda_key   = "cancel-order"
-    }
-    create_order_orchestrated = {
-      resource_key = "orders"
-      http_method  = "PUT"
-      lambda_key   = "order-orchestrator"
     }
   }
 
@@ -210,61 +183,6 @@ resource "aws_iam_role_policy" "lambda_cart_access" {
           "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/cart-service-carts-${var.environment}",
           "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/cart-service-carts-${var.environment}/index/*"
         ]
-      }
-    ]
-  })
-}
-
-# ============================================================================
-# DURABLE FUNCTION CONFIGURATION
-# ============================================================================
-
-# Enable durable execution for order orchestrator
-resource "aws_lambda_function_event_invoke_config" "order_orchestrator" {
-  function_name = module.order_service.lambda_functions["order-orchestrator"].function_name
-
-  maximum_event_age_in_seconds = 21600  # 6 hours
-  maximum_retry_attempts       = 2
-}
-
-# Grant additional permissions for orchestrator
-resource "aws_iam_role_policy" "orchestrator_permissions" {
-  name = "${var.service_name}-orchestrator-permissions-${var.environment}"
-  role = module.order_service.lambda_roles["order-orchestrator"].name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "cloudwatch:PutMetricData"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ses:SendEmail",
-          "ses:SendTemplatedEmail"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = "arn:aws:secretsmanager:${var.aws_region}:*:secret:travel-platform-stripe-key-${var.environment}-*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem"
-        ]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/payment-service-payments-${var.environment}"
       }
     ]
   })
