@@ -151,21 +151,19 @@ module "booking_workflow" {
             }
           }
           UpdateExpression = "SET available = :false, reservedBy = :userId, reservedAt = :timestamp"
+          ConditionExpression = "available = :true"
           ExpressionAttributeValues = {
             ":false" = {
               BOOL = false
+            }
+            ":true" = {
+              BOOL = true
             }
             ":userId" = {
               "S.$" = "$.userId"
             }
             ":timestamp" = {
               "S.$" = "$$.State.EnteredTime"
-            }
-          }
-          ConditionExpression = "available = :true"
-          ExpressionAttributeValues = {
-            ":true" = {
-              BOOL = true
             }
           }
         }
