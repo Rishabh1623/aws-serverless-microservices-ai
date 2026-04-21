@@ -202,7 +202,8 @@ def lambda_handler(event, context):
         
     except TransactionError as e:
         # Transaction failed (room unavailable, etc.)
-        print(f"Transaction error: {str(e)}")        publish_booking_metrics('CreateBooking', 0, 0, success=False)
+        print(f"Transaction error: {str(e)}")
+        publish_booking_metrics('CreateBooking', 0, 0, success=False)
         
         return {
             'statusCode': 409,  # Conflict
