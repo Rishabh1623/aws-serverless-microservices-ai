@@ -10,43 +10,6 @@
  * - Automatic rollback on failures
  */
 
-terraform {
-  required_version = ">= 1.0"
-  
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-# ============================================================================
-# VARIABLES
-# ============================================================================
-
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "environment" {
-  description = "Environment (dev, staging, prod)"
-  type        = string
-  default     = "dev"
-}
-
-variable "project_name" {
-  description = "Project name"
-  type        = string
-  default     = "travel-platform"
-}
-
 # ============================================================================
 # DATA SOURCES
 # ============================================================================
@@ -408,23 +371,4 @@ module "booking_workflow" {
     Project     = var.project_name
     Service     = "hotel-booking-workflow"
   }
-}
-
-# ============================================================================
-# OUTPUTS
-# ============================================================================
-
-output "state_machine_arn" {
-  description = "ARN of the hotel booking workflow"
-  value       = module.booking_workflow.state_machine_arn
-}
-
-output "state_machine_name" {
-  description = "Name of the hotel booking workflow"
-  value       = module.booking_workflow.state_machine_name
-}
-
-output "log_group_name" {
-  description = "CloudWatch log group for workflow execution logs"
-  value       = module.booking_workflow.log_group_name
 }
