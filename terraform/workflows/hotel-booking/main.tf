@@ -150,17 +150,6 @@ module "booking_workflow" {
               "S.$" = "$.roomId"
             }
           }
-      # Step 4: Reserve the room
-      ReserveRoom = {
-        Type = "Task"
-        Resource = "arn:aws:states:::dynamodb:updateItem"
-        Parameters = {
-          TableName = data.aws_dynamodb_table.rooms.name
-          Key = {
-            roomId = {
-              "S.$" = "$.roomId"
-            }
-          }
           UpdateExpression = "SET available = :false, reservedBy = :userId"
           ConditionExpression = "available = :true"
           ExpressionAttributeValues = {
@@ -174,7 +163,6 @@ module "booking_workflow" {
               "S.$" = "$.userId"
             }
           }
-        }
         }
         ResultPath = "$.reservationResult"
         Retry = [
@@ -340,7 +328,7 @@ module "booking_workflow" {
               "S.$" = "$.roomId"
             }
           }
-          UpdateExpression = "SET available = :true REMOVE reservedBy, reservedAt"
+          UpdateExpression = "SET available = :true REMOVE reservedBy"
           ExpressionAttributeValues = {
             ":true" = {
               BOOL = true
