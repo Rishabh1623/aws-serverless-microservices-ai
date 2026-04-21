@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { API_CONFIG, DEMO_USER_ID } from '../config'
+import { triggerHotelBooking } from '../services/workflowService'
 
 export default function Products() {
   const [products, setProducts] = useState([])
@@ -9,6 +10,15 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [sortBy, setSortBy] = useState('name')
+  const [bookingModal, setBookingModal] = useState({ show: false, hotel: null })
+  const [bookingForm, setBookingForm] = useState({
+    checkIn: '',
+    checkOut: '',
+    guests: 2,
+    guestName: '',
+    guestEmail: ''
+  })
+  const [bookingInProgress, setBookingInProgress] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -80,19 +90,49 @@ export default function Products() {
   }
 
   const addToCart = async (product) => {
+    // Open booking modal instead of direct add to cart
+    setBookingModal({ show: true, hotel: product })
+    // Set default dates (7 days from now for 3 nights)
+    const checkIn = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    const checkOut = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    setBookingForm({
+      checkIn,
+      checkOut,
+      guests: 2,
+      guestName: '',
+      guestEmail: ''
+    })
+  }
+
+  const handleBooking = async () => {
+    if (!bookingForm.guestName || !bookingForm.guestEmail) {
+      alert('Please fill in all guest details')
+      return
+    }
+
+    setBookingInProgress(true)
     try {
-      await axios.post(`${API_CONFIG.CART_API}/cart/add`, {
+      // Trigger hotel booking workflow
+      const workflowData = {
+        hotelId: bookingModal.hotel.id,
+        roomId: `room-${bookingModal.hotel.id}-001`,
         userId: DEMO_USER_ID,
-        hotelId: product.id || product.hotelId,
-        roomId: `room-${product.id}-001`,
-        checkIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        checkOut: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        guests: 2,
-        roomType: 'deluxe'
-      })
-      alert(`✅ ${product.name} added to your trip!`)
+        checkIn: bookingForm.checkIn,
+        checkOut: bookingForm.checkOut,
+        guestName: bookingForm.guestName,
+        guestEmail: bookingForm.guestEmail,
+        guests: bookingForm.guests
+      }
+
+      await triggerHotelBooking(workflowData)
+      
+      alert(`✅ Booking confirmed for ${bookingModal.hotel.name}!\nWorkflow started successfully.`)
+      setBookingModal({ show: false, hotel: null })
     } catch (err) {
-      alert('✅ Added to trip (demo mode)')
+      console.error('Booking error:', err)
+      alert('❌ Booking failed. Please try again.')
+    } finally {
+      setBookingInProgress(false)
     }
   }
 
@@ -271,6 +311,105 @@ export default function Products() {
           >
             Clear Filters
           </button>
+        </div>
+      )}
+
+      {/* Booking Modal */}
+      {bookingModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Book Hotel</h2>
+                <p className="text-gray-600">{bookingModal.hotel?.name}</p>
+              </div>
+              <button
+                onClick={() => setBookingModal({ show: false, hotel: null })}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Check-in Date</label>
+                <input
+                  type="date"
+                  value={bookingForm.checkIn}
+                  onChange={(e) => setBookingForm({...bookingForm, checkIn: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Check-out Date</label>
+                <input
+                  type="date"
+                  value={bookingForm.checkOut}
+                  onChange={(e) => setBookingForm({...bookingForm, checkOut: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                  min={bookingForm.checkIn}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Number of Guests</label>
+                <input
+                  type="number"
+                  value={bookingForm.guests}
+                  onChange={(e) => setBookingForm({...bookingForm, guests: parseInt(e.target.value)})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                  min="1"
+                  max="10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Guest Name</label>
+                <input
+                  type="text"
+                  value={bookingForm.guestName}
+                  onChange={(e) => setBookingForm({...bookingForm, guestName: e.target.value})}
+                  placeholder="John Doe"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Guest Email</label>
+                <input
+                  type="email"
+                  value={bookingForm.guestEmail}
+                  onChange={(e) => setBookingForm({...bookingForm, guestEmail: e.target.value})}
+                  placeholder="john@example.com"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600">Price per night:</span>
+                  <span className="font-semibold">${bookingModal.hotel?.price}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold text-primary">
+                  <span>Total:</span>
+                  <span>${bookingModal.hotel?.price * Math.max(1, Math.ceil((new Date(bookingForm.checkOut) - new Date(bookingForm.checkIn)) / (1000 * 60 * 60 * 24)))}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleBooking}
+                disabled={bookingInProgress}
+                className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {bookingInProgress ? 'Processing...' : 'Confirm Booking'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
