@@ -17,12 +17,22 @@ from decimal import Decimal
 sys.path.append('/opt/python')  # Lambda layer path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'shared', 'python'))
 
-from dynamodb_transactions import (
-    create_booking_with_transaction,
-    TransactionError,
-    check_idempotency,
-    store_idempotency_result
-)
+# Import shared modules only when needed (for API Gateway path)
+try:
+    from dynamodb_transactions import (
+        create_booking_with_transaction,
+        TransactionError,
+        check_idempotency,
+        store_idempotency_result
+    )
+    TRANSACTIONS_AVAILABLE = True
+except ImportError:
+    print("Warning: dynamodb_transactions not available, workflow mode only")
+    TRANSACTIONS_AVAILABLE = False
+    
+    # Define placeholder for TransactionError
+    class TransactionError(Exception):
+        pass
 
 dynamodb = boto3.resource('dynamodb')
 events = boto3.client('events')
@@ -71,6 +81,13 @@ def lambda_handler(event, context):
             return handle_workflow_action(event, context)
         
         # Otherwise, handle as API Gateway request
+        if not TRANSACTIONS_AVAILABLE:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Transaction module not available'})
+            }
+        
         body = json.loads(event['body'])
         
         # Extract fields
