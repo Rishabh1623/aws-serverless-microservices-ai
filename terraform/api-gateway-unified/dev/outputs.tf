@@ -27,6 +27,6 @@ output "existing_service_endpoints" {
     hotel_service   = "https://${data.aws_api_gateway_rest_api.hotel_service.id}.execute-api.${var.aws_region}.amazonaws.com/dev"
     order_service   = "https://${data.aws_api_gateway_rest_api.order_service.id}.execute-api.${var.aws_region}.amazonaws.com/dev"
     payment_service = "https://${data.aws_api_gateway_rest_api.payment_service.id}.execute-api.${var.aws_region}.amazonaws.com/dev"
-    agent_service   = "https://${data.aws_api_gateway_rest_api.agent_service.id}.execute-api.${var.aws_region}.amazonaws.com"
+    # agent_service = "Check agent-service deployment for endpoint"
   }
 }

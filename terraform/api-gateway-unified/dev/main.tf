@@ -29,9 +29,11 @@ data "aws_api_gateway_rest_api" "payment_service" {
   name = "payment-service-dev"
 }
 
-data "aws_api_gateway_rest_api" "agent_service" {
-  name = "agent-service-dev"
-}
+# Agent service API Gateway (optional - may have different naming)
+# Commented out to avoid errors if not deployed
+# data "aws_api_gateway_rest_api" "agent_service" {
+#   name = "agent-service-dev"
+# }
 
 # Get Step Functions state machines
 data "aws_sfn_state_machine" "hotel_booking" {
