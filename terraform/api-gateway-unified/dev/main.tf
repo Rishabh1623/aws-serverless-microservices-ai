@@ -195,11 +195,13 @@ resource "aws_api_gateway_integration_response" "hotel_booking_post_200" {
   }
 
   response_templates = {
-    "application/json" = jsonencode({
-      executionArn = "$input.path('$.executionArn')"
-      startDate    = "$input.path('$.startDate')"
-      message      = "Workflow started successfully"
-    })
+    "application/json" = <<EOF
+{
+  "executionArn": "$input.path('$.executionArn')",
+  "startDate": "$input.path('$.startDate')",
+  "message": "Hotel booking workflow started successfully"
+}
+EOF
   }
 
   depends_on = [aws_api_gateway_integration.hotel_booking_post]
@@ -256,11 +258,13 @@ resource "aws_api_gateway_integration_response" "order_workflow_post_200" {
   }
 
   response_templates = {
-    "application/json" = jsonencode({
-      executionArn = "$input.path('$.executionArn')"
-      startDate    = "$input.path('$.startDate')"
-      message      = "Order workflow started successfully"
-    })
+    "application/json" = <<EOF
+{
+  "executionArn": "$input.path('$.executionArn')",
+  "startDate": "$input.path('$.startDate')",
+  "message": "Order workflow started successfully"
+}
+EOF
   }
 
   depends_on = [aws_api_gateway_integration.order_workflow_post]
@@ -317,11 +321,13 @@ resource "aws_api_gateway_integration_response" "payment_workflow_post_200" {
   }
 
   response_templates = {
-    "application/json" = jsonencode({
-      executionArn = "$input.path('$.executionArn')"
-      startDate    = "$input.path('$.startDate')"
-      message      = "Payment workflow started successfully"
-    })
+    "application/json" = <<EOF
+{
+  "executionArn": "$input.path('$.executionArn')",
+  "startDate": "$input.path('$.startDate')",
+  "message": "Payment workflow started successfully"
+}
+EOF
   }
 
   depends_on = [aws_api_gateway_integration.payment_workflow_post]
