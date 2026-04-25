@@ -63,6 +63,7 @@ resource "aws_api_gateway_deployment" "this" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_rest_api.this.body,
       aws_api_gateway_integration.lambda_integrations,
+      aws_api_gateway_integration.options,
     ]))
   }
   
@@ -71,7 +72,8 @@ resource "aws_api_gateway_deployment" "this" {
   }
   
   depends_on = [
-    aws_api_gateway_integration.lambda_integrations
+    aws_api_gateway_integration.lambda_integrations,
+    aws_api_gateway_integration_response.options
   ]
 }
 
@@ -310,6 +312,72 @@ resource "aws_api_gateway_integration" "lambda_integrations" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.functions[each.value.lambda_key].invoke_arn
+}
+
+# ============================================================================
+# CORS SUPPORT - OPTIONS Methods
+# ============================================================================
+
+# OPTIONS method for each resource (CORS preflight)
+resource "aws_api_gateway_method" "options" {
+  for_each = var.api_gateway_resources
+  
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  resource_id   = local.all_resources[each.key].id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Mock integration for OPTIONS (no Lambda needed)
+resource "aws_api_gateway_integration" "options" {
+  for_each = var.api_gateway_resources
+  
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = local.all_resources[each.key].id
+  http_method = aws_api_gateway_method.options[each.key].http_method
+  type        = "MOCK"
+  
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# OPTIONS method response
+resource "aws_api_gateway_method_response" "options" {
+  for_each = var.api_gateway_resources
+  
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = local.all_resources[each.key].id
+  http_method = aws_api_gateway_method.options[each.key].http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+  
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+# OPTIONS integration response with CORS headers
+resource "aws_api_gateway_integration_response" "options" {
+  for_each = var.api_gateway_resources
+  
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = local.all_resources[each.key].id
+  http_method = aws_api_gateway_method.options[each.key].http_method
+  status_code = aws_api_gateway_method_response.options[each.key].status_code
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+  
+  depends_on = [aws_api_gateway_integration.options]
 }
 
 # DynamoDB Tables
