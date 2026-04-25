@@ -28,6 +28,12 @@ data "archive_file" "booking_notification" {
   output_path = "${path.module}/lambda_packages/booking_notification.zip"
 }
 
+data "archive_file" "get_bookings" {
+  type        = "zip"
+  source_dir  = "${path.module}/../../../hotel-service/src/get_bookings"
+  output_path = "${path.module}/lambda_packages/get_bookings.zip"
+}
+
 # ============================================================================
 # HOTEL SERVICE MODULE
 # ============================================================================
@@ -92,6 +98,17 @@ module "hotel_service" {
         ENVIRONMENT           = var.environment
       }
     }
+    get-bookings = {
+      filename    = data.archive_file.get_bookings.output_path
+      handler     = "app.lambda_handler"
+      runtime     = var.lambda_runtime
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_variables = {
+        BOOKING_TABLE = "${var.service_name}-bookings-${var.environment}"
+        ENVIRONMENT   = var.environment
+      }
+    }
   }
 
   api_gateway_resources = {
@@ -122,6 +139,11 @@ module "hotel_service" {
       resource_key = "bookings"
       http_method  = "POST"
       lambda_key   = "create-booking"
+    }
+    get_bookings = {
+      resource_key = "bookings"
+      http_method  = "GET"
+      lambda_key   = "get-bookings"
     }
   }
 

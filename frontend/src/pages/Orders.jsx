@@ -13,40 +13,47 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_CONFIG.ORDER_API}/orders/user/${DEMO_USER_ID}`)
-      setOrders(response.data.orders || [])
-    } catch (err) {
-      // Demo data
-      setOrders([
-        {
-          orderId: 'ORD-12345',
-          userId: DEMO_USER_ID,
-          items: [
-            { hotelName: 'Grand Hotel Paris', pricePerNight: 299, nights: 3, totalPrice: 897 },
-            { hotelName: 'Boutique Marais', pricePerNight: 189, nights: 2, totalPrice: 378 }
-          ],
-          totalPrice: 1275,
-          status: 'completed',
-          createdAt: new Date().toISOString(),
-          paymentStatus: 'completed',
-          guestDetails: { name: 'Demo User', email: 'demo@example.com' }
-        },
-        {
-          orderId: 'ORD-12344',
-          userId: DEMO_USER_ID,
-          items: [
-            { hotelName: 'Tokyo Imperial Hotel', pricePerNight: 329, nights: 4, totalPrice: 1316 }
-          ],
-          totalPrice: 1316,
-          status: 'confirmed',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          paymentStatus: 'completed',
-          guestDetails: { name: 'Demo User', email: 'demo@example.com' }
+      // Fetch real bookings from Hotel Service API
+      const response = await axios.get(`${API_CONFIG.HOTEL_API}/bookings?userId=${DEMO_USER_ID}`)
+      
+      // Transform bookings to match the order format
+      const bookings = response.data.bookings || []
+      const transformedOrders = bookings.map(booking => ({
+        orderId: booking.bookingId,
+        userId: booking.userId,
+        items: [{
+          hotelName: booking.hotelName || 'Hotel',
+          roomType: booking.roomType || 'Room',
+          checkIn: booking.checkIn,
+          checkOut: booking.checkOut,
+          nights: booking.nights || calculateNights(booking.checkIn, booking.checkOut),
+          pricePerNight: booking.totalPrice / (booking.nights || 1),
+          totalPrice: booking.totalPrice
+        }],
+        totalPrice: booking.totalPrice,
+        status: booking.status,
+        createdAt: booking.createdAt,
+        paymentStatus: booking.paymentStatus || 'completed',
+        guestDetails: {
+          name: booking.guestName,
+          email: booking.guestEmail
         }
-      ])
+      }))
+      
+      setOrders(transformedOrders)
+    } catch (err) {
+      console.error('Error fetching bookings:', err)
+      setOrders([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const calculateNights = (checkIn, checkOut) => {
+    if (!checkIn || !checkOut) return 1
+    const start = new Date(checkIn)
+    const end = new Date(checkOut)
+    return Math.ceil((end - start) / (1000 * 60 * 60 * 24))
   }
 
   const getStatusColor = (status) => {
