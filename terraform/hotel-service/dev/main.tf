@@ -106,6 +106,8 @@ module "hotel_service" {
       timeout     = var.lambda_timeout
       environment_variables = {
         BOOKING_TABLE = "${var.service_name}-bookings-${var.environment}"
+        HOTEL_TABLE   = "${var.service_name}-hotels-${var.environment}"
+        ROOM_TABLE    = "${var.service_name}-rooms-${var.environment}"
         ENVIRONMENT   = var.environment
       }
     }
