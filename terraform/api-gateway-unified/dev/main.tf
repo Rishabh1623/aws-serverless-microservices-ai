@@ -164,12 +164,15 @@ resource "aws_api_gateway_integration" "hotel_booking_post" {
   integration_http_method = "POST"
   uri                     = "arn:aws:apigateway:${var.aws_region}:states:action/StartExecution"
   credentials             = aws_iam_role.api_gateway_sfn.arn
+  passthrough_behavior    = "NEVER"
 
   request_templates = {
-    "application/json" = jsonencode({
-      stateMachineArn = data.aws_sfn_state_machine.hotel_booking.arn
-      input           = "$util.escapeJavaScript($input.body)"
-    })
+    "application/json" = <<EOF
+{
+  "stateMachineArn": "${data.aws_sfn_state_machine.hotel_booking.arn}",
+  "input": "$util.escapeJavaScript($input.json('$'))"
+}
+EOF
   }
 }
 
@@ -196,9 +199,10 @@ resource "aws_api_gateway_integration_response" "hotel_booking_post_200" {
 
   response_templates = {
     "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
 {
-  "executionArn": "$input.path('$.executionArn')",
-  "startDate": "$input.path('$.startDate')",
+  "executionArn": "$inputRoot.executionArn",
+  "startDate": "$inputRoot.startDate",
   "message": "Hotel booking workflow started successfully"
 }
 EOF
@@ -227,12 +231,15 @@ resource "aws_api_gateway_integration" "order_workflow_post" {
   integration_http_method = "POST"
   uri                     = "arn:aws:apigateway:${var.aws_region}:states:action/StartExecution"
   credentials             = aws_iam_role.api_gateway_sfn.arn
+  passthrough_behavior    = "NEVER"
 
   request_templates = {
-    "application/json" = jsonencode({
-      stateMachineArn = data.aws_sfn_state_machine.order_processing.arn
-      input           = "$util.escapeJavaScript($input.body)"
-    })
+    "application/json" = <<EOF
+{
+  "stateMachineArn": "${data.aws_sfn_state_machine.order_processing.arn}",
+  "input": "$util.escapeJavaScript($input.json('$'))"
+}
+EOF
   }
 }
 
@@ -259,9 +266,10 @@ resource "aws_api_gateway_integration_response" "order_workflow_post_200" {
 
   response_templates = {
     "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
 {
-  "executionArn": "$input.path('$.executionArn')",
-  "startDate": "$input.path('$.startDate')",
+  "executionArn": "$inputRoot.executionArn",
+  "startDate": "$inputRoot.startDate",
   "message": "Order workflow started successfully"
 }
 EOF
@@ -290,12 +298,15 @@ resource "aws_api_gateway_integration" "payment_workflow_post" {
   integration_http_method = "POST"
   uri                     = "arn:aws:apigateway:${var.aws_region}:states:action/StartExecution"
   credentials             = aws_iam_role.api_gateway_sfn.arn
+  passthrough_behavior    = "NEVER"
 
   request_templates = {
-    "application/json" = jsonencode({
-      stateMachineArn = data.aws_sfn_state_machine.payment_processing.arn
-      input           = "$util.escapeJavaScript($input.body)"
-    })
+    "application/json" = <<EOF
+{
+  "stateMachineArn": "${data.aws_sfn_state_machine.payment_processing.arn}",
+  "input": "$util.escapeJavaScript($input.json('$'))"
+}
+EOF
   }
 }
 
@@ -322,9 +333,10 @@ resource "aws_api_gateway_integration_response" "payment_workflow_post_200" {
 
   response_templates = {
     "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
 {
-  "executionArn": "$input.path('$.executionArn')",
-  "startDate": "$input.path('$.startDate')",
+  "executionArn": "$inputRoot.executionArn",
+  "startDate": "$inputRoot.startDate",
   "message": "Payment workflow started successfully"
 }
 EOF
