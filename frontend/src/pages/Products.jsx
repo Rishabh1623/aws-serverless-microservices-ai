@@ -32,11 +32,14 @@ export default function Products() {
       setError(null)
     } catch (err) {
       setError('Failed to load hotels. Using demo data.')
-      // Demo hotel data - Generic fictional names for demo purposes
+      // Demo hotel data - Using real database IDs for testing
       setProducts([
-        // Paris Hotels
-        { id: 'hotel1', name: 'Le Parisien Luxury Hotel', price: 299, category: 'Paris', stock: 5, description: 'Luxury 5-star hotel in the heart of Paris with Eiffel Tower views', imageUrl: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=400&h=300&fit=crop' },
-        { id: 'hotel2', name: 'Marais Boutique Inn', price: 189, category: 'Paris', stock: 8, description: 'Charming boutique hotel in historic Marais district', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
+        // Real hotels from database
+        { id: 'h123', roomId: 'r456', name: 'Grand Plaza Hotel', price: 250, category: 'New York', stock: 13, description: 'Luxury 5-star hotel in Manhattan with stunning city views', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
+        { id: 'h124', roomId: 'r501', name: 'Beach Paradise Resort', price: 300, category: 'Miami', stock: 10, description: 'Beachfront resort with private beach access', imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop' },
+        { id: 'h125', roomId: 'r601', name: 'Downtown Business Hotel', price: 220, category: 'San Francisco', stock: 15, description: 'Modern business hotel in downtown SF', imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop' },
+        
+        // Additional demo hotels
         { id: 'hotel3', name: 'Paris Executive Suites', price: 249, category: 'Paris', stock: 12, description: 'Modern business hotel near La Défense with conference facilities', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop' },
         
         // London Hotels
@@ -115,7 +118,7 @@ export default function Products() {
       // Trigger hotel booking workflow
       const workflowData = {
         hotelId: bookingModal.hotel.id,
-        roomId: `room-${bookingModal.hotel.id}-001`,
+        roomId: bookingModal.hotel.roomId || `room-${bookingModal.hotel.id}-001`,
         userId: DEMO_USER_ID,
         checkIn: bookingForm.checkIn,
         checkOut: bookingForm.checkOut,
