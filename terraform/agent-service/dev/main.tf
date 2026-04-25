@@ -95,7 +95,7 @@ resource "aws_lambda_function" "agent_package" {
       CONVERSATION_TABLE = aws_dynamodb_table.conversations.name
       SECRETS_ARN        = module.secrets.secret_arns["bedrock_config"]
       LOG_LEVEL          = "INFO"
-      AWS_REGION         = var.aws_region
+      BEDROCK_REGION     = var.aws_region
     }
   }
 
