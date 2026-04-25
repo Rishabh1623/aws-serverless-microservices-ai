@@ -87,13 +87,15 @@ resource "aws_lambda_function" "agent_package" {
   # Environment variables
   environment {
     variables = {
-      HOTEL_API_URL    = local.hotel_api_url
-      CART_API_URL     = local.cart_api_url
-      ORDER_API_URL    = local.order_api_url
-      PAYMENT_API_URL  = local.payment_api_url
-      BEDROCK_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
-      SECRETS_ARN      = module.secrets.secret_arns["bedrock_config"]
-      LOG_LEVEL        = "INFO"
+      HOTEL_API_URL      = local.hotel_api_url
+      CART_API_URL       = local.cart_api_url
+      ORDER_API_URL      = local.order_api_url
+      PAYMENT_API_URL    = local.payment_api_url
+      BEDROCK_MODEL_ID   = "anthropic.claude-3-sonnet-20240229-v1:0"
+      CONVERSATION_TABLE = aws_dynamodb_table.conversations.name
+      SECRETS_ARN        = module.secrets.secret_arns["bedrock_config"]
+      LOG_LEVEL          = "INFO"
+      AWS_REGION         = var.aws_region
     }
   }
 
@@ -186,6 +188,69 @@ resource "aws_iam_role_policy" "bedrock_access" {
 resource "aws_iam_role_policy_attachment" "lambda_secrets" {
   role       = aws_iam_role.agent_lambda.name
   policy_arn = module.secrets.secrets_access_policy_arn
+}
+
+# DynamoDB permissions for conversation history
+resource "aws_iam_role_policy" "dynamodb_access" {
+  name = "${local.service_name}-${local.environment}-dynamodb-policy"
+  role = aws_iam_role.agent_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = [
+          aws_dynamodb_table.conversations.arn,
+          "${aws_dynamodb_table.conversations.arn}/index/*"
+        ]
+      }
+    ]
+  })
+}
+
+# ============================================================================
+# DYNAMODB TABLE FOR CONVERSATION HISTORY
+# ============================================================================
+
+resource "aws_dynamodb_table" "conversations" {
+  name           = "${local.service_name}-conversations-${local.environment}"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "userId"
+  range_key      = "sessionId"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "sessionId"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  point_in_time_recovery {
+    enabled = false # Enable in production
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  tags = {
+    Service = local.service_name
+  }
 }
 
 # ============================================================================
