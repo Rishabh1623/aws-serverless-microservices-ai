@@ -10,13 +10,13 @@ BUILD_DIR="$(pwd)/build"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
-# Copy source code
+# Install dependencies FIRST (critical: must be before copying source code)
+echo "Installing dependencies..."
+python3 -m pip install --force-reinstall --upgrade -r requirements.txt -t "$BUILD_DIR/" --platform manylinux2014_x86_64 --only-binary=:all:
+
+# Copy source code AFTER (to avoid overwriting installed packages)
 echo "Copying source code..."
 cp -r src/agent_handler/* "$BUILD_DIR/"
-
-# Install dependencies
-echo "Installing dependencies..."
-python3 -m pip install -r requirements.txt -t "$BUILD_DIR/" --platform manylinux2014_x86_64 --only-binary=:all:
 
 # Create zip file
 echo "Creating deployment package..."
