@@ -74,7 +74,7 @@ resource "aws_lambda_function" "agent_package" {
   source_code_hash = filebase64sha256("${path.module}/../../../agent-service/agent-service-lambda.zip")
 
   # Runtime configuration
-  runtime = "python3.11"
+  runtime = "python3.10"  # Changed from 3.11 to avoid OpenTelemetry PEP 479 bug
   handler = "app.lambda_handler"
 
   # Resource allocation
