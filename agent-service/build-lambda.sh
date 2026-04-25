@@ -16,7 +16,7 @@ cp -r src/agent_handler/* "$BUILD_DIR/"
 
 # Install dependencies
 echo "Installing dependencies..."
-pip install -r requirements.txt -t "$BUILD_DIR/" --platform manylinux2014_x86_64 --only-binary=:all:
+python3 -m pip install -r requirements.txt -t "$BUILD_DIR/" --platform manylinux2014_x86_64 --only-binary=:all:
 
 # Create zip file
 echo "Creating deployment package..."
