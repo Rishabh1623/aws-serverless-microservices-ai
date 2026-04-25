@@ -29,12 +29,6 @@ data "aws_api_gateway_rest_api" "payment_service" {
   name = "payment-service-dev"
 }
 
-# Agent service API Gateway (optional - may have different naming)
-# Commented out to avoid errors if not deployed
-# data "aws_api_gateway_rest_api" "agent_service" {
-#   name = "agent-service-dev"
-# }
-
 # Get Step Functions state machines
 data "aws_sfn_state_machine" "hotel_booking" {
   name = "travel-platform-hotel-booking-dev"
@@ -64,6 +58,20 @@ resource "aws_api_gateway_rest_api" "unified" {
     Environment = var.environment
     Project     = var.project_name
     ManagedBy   = "Terraform"
+  }
+}
+
+# ============================================================================
+# CLOUDWATCH LOG GROUP FOR API GATEWAY
+# ============================================================================
+
+resource "aws_cloudwatch_log_group" "api_gateway" {
+  name              = "/aws/apigateway/${var.project_name}-unified-api-${var.environment}"
+  retention_in_days = 7
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
 
@@ -131,14 +139,22 @@ resource "aws_iam_role_policy" "api_gateway_sfn" {
       {
         Effect = "Allow"
         Action = [
-          "states:StartExecution",
-          "states:StartSyncExecution"
+          "states:StartExecution"
         ]
         Resource = [
           data.aws_sfn_state_machine.hotel_booking.arn,
           data.aws_sfn_state_machine.order_processing.arn,
           data.aws_sfn_state_machine.payment_processing.arn
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -152,7 +168,7 @@ resource "aws_api_gateway_method" "hotel_booking_post" {
   rest_api_id   = aws_api_gateway_rest_api.unified.id
   resource_id   = aws_api_gateway_resource.hotel_booking_workflow.id
   http_method   = "POST"
-  authorization = "NONE"  # Add Cognito auth later if needed
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "hotel_booking_post" {
@@ -164,15 +180,15 @@ resource "aws_api_gateway_integration" "hotel_booking_post" {
   integration_http_method = "POST"
   uri                     = "arn:aws:apigateway:${var.aws_region}:states:action/StartExecution"
   credentials             = aws_iam_role.api_gateway_sfn.arn
-  passthrough_behavior    = "NEVER"
 
   request_templates = {
-    "application/json" = <<EOF
-{
-  "stateMachineArn": "${data.aws_sfn_state_machine.hotel_booking.arn}",
-  "input": "$util.escapeJavaScript($input.json('$'))"
-}
-EOF
+    "application/json" = <<-EOT
+      #set($data = $input.path('$'))
+      {
+        "stateMachineArn": "${data.aws_sfn_state_machine.hotel_booking.arn}",
+        "input": "$util.escapeJavaScript($input.json('$'))"
+      }
+    EOT
   }
 }
 
@@ -184,6 +200,10 @@ resource "aws_api_gateway_method_response" "hotel_booking_post_200" {
 
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
   }
 }
 
@@ -198,14 +218,14 @@ resource "aws_api_gateway_integration_response" "hotel_booking_post_200" {
   }
 
   response_templates = {
-    "application/json" = <<EOF
-#set($inputRoot = $input.path('$'))
-{
-  "executionArn": "$inputRoot.executionArn",
-  "startDate": "$inputRoot.startDate",
-  "message": "Hotel booking workflow started successfully"
-}
-EOF
+    "application/json" = <<-EOT
+      #set($inputRoot = $input.path('$'))
+      {
+        "executionArn": "$inputRoot.executionArn",
+        "startDate": "$inputRoot.startDate",
+        "message": "Hotel booking workflow started successfully"
+      }
+    EOT
   }
 
   depends_on = [aws_api_gateway_integration.hotel_booking_post]
@@ -231,15 +251,14 @@ resource "aws_api_gateway_integration" "order_workflow_post" {
   integration_http_method = "POST"
   uri                     = "arn:aws:apigateway:${var.aws_region}:states:action/StartExecution"
   credentials             = aws_iam_role.api_gateway_sfn.arn
-  passthrough_behavior    = "NEVER"
 
   request_templates = {
-    "application/json" = <<EOF
-{
-  "stateMachineArn": "${data.aws_sfn_state_machine.order_processing.arn}",
-  "input": "$util.escapeJavaScript($input.json('$'))"
-}
-EOF
+    "application/json" = <<-EOT
+      {
+        "stateMachineArn": "${data.aws_sfn_state_machine.order_processing.arn}",
+        "input": "$util.escapeJavaScript($input.json('$'))"
+      }
+    EOT
   }
 }
 
@@ -251,6 +270,10 @@ resource "aws_api_gateway_method_response" "order_workflow_post_200" {
 
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
   }
 }
 
@@ -265,14 +288,14 @@ resource "aws_api_gateway_integration_response" "order_workflow_post_200" {
   }
 
   response_templates = {
-    "application/json" = <<EOF
-#set($inputRoot = $input.path('$'))
-{
-  "executionArn": "$inputRoot.executionArn",
-  "startDate": "$inputRoot.startDate",
-  "message": "Order workflow started successfully"
-}
-EOF
+    "application/json" = <<-EOT
+      #set($inputRoot = $input.path('$'))
+      {
+        "executionArn": "$inputRoot.executionArn",
+        "startDate": "$inputRoot.startDate",
+        "message": "Order workflow started successfully"
+      }
+    EOT
   }
 
   depends_on = [aws_api_gateway_integration.order_workflow_post]
@@ -298,15 +321,14 @@ resource "aws_api_gateway_integration" "payment_workflow_post" {
   integration_http_method = "POST"
   uri                     = "arn:aws:apigateway:${var.aws_region}:states:action/StartExecution"
   credentials             = aws_iam_role.api_gateway_sfn.arn
-  passthrough_behavior    = "NEVER"
 
   request_templates = {
-    "application/json" = <<EOF
-{
-  "stateMachineArn": "${data.aws_sfn_state_machine.payment_processing.arn}",
-  "input": "$util.escapeJavaScript($input.json('$'))"
-}
-EOF
+    "application/json" = <<-EOT
+      {
+        "stateMachineArn": "${data.aws_sfn_state_machine.payment_processing.arn}",
+        "input": "$util.escapeJavaScript($input.json('$'))"
+      }
+    EOT
   }
 }
 
@@ -318,6 +340,10 @@ resource "aws_api_gateway_method_response" "payment_workflow_post_200" {
 
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
   }
 }
 
@@ -332,14 +358,14 @@ resource "aws_api_gateway_integration_response" "payment_workflow_post_200" {
   }
 
   response_templates = {
-    "application/json" = <<EOF
-#set($inputRoot = $input.path('$'))
-{
-  "executionArn": "$inputRoot.executionArn",
-  "startDate": "$inputRoot.startDate",
-  "message": "Payment workflow started successfully"
-}
-EOF
+    "application/json" = <<-EOT
+      #set($inputRoot = $input.path('$'))
+      {
+        "executionArn": "$inputRoot.executionArn",
+        "startDate": "$inputRoot.startDate",
+        "message": "Payment workflow started successfully"
+      }
+    EOT
   }
 
   depends_on = [aws_api_gateway_integration.payment_workflow_post]
@@ -408,6 +434,9 @@ resource "aws_api_gateway_deployment" "unified" {
       aws_api_gateway_integration.hotel_booking_post.id,
       aws_api_gateway_integration.order_workflow_post.id,
       aws_api_gateway_integration.payment_workflow_post.id,
+      aws_api_gateway_integration_response.hotel_booking_post_200.id,
+      aws_api_gateway_integration_response.order_workflow_post_200.id,
+      aws_api_gateway_integration_response.payment_workflow_post_200.id,
     ]))
   }
 
@@ -419,6 +448,9 @@ resource "aws_api_gateway_deployment" "unified" {
     aws_api_gateway_integration.hotel_booking_post,
     aws_api_gateway_integration.order_workflow_post,
     aws_api_gateway_integration.payment_workflow_post,
+    aws_api_gateway_integration_response.hotel_booking_post_200,
+    aws_api_gateway_integration_response.order_workflow_post_200,
+    aws_api_gateway_integration_response.payment_workflow_post_200,
   ]
 }
 
@@ -428,6 +460,23 @@ resource "aws_api_gateway_stage" "unified" {
   stage_name    = var.environment
 
   xray_tracing_enabled = true
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gateway.arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      ip             = "$context.identity.sourceIp"
+      caller         = "$context.identity.caller"
+      user           = "$context.identity.user"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      resourcePath   = "$context.resourcePath"
+      status         = "$context.status"
+      protocol       = "$context.protocol"
+      responseLength = "$context.responseLength"
+      integrationError = "$context.integrationErrorMessage"
+    })
+  }
 
   tags = {
     Environment = var.environment
