@@ -91,7 +91,7 @@ resource "aws_lambda_function" "agent_package" {
       CART_API_URL       = local.cart_api_url
       ORDER_API_URL      = local.order_api_url
       PAYMENT_API_URL    = local.payment_api_url
-      BEDROCK_MODEL_ID   = "us.anthropic.claude-haiku-4-5-v1:0"
+      BEDROCK_MODEL_ID   = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
       CONVERSATION_TABLE = aws_dynamodb_table.conversations.name
       SECRETS_ARN        = module.secrets.secret_arns["bedrock_config"]
       LOG_LEVEL          = "INFO"
@@ -117,7 +117,7 @@ module "secrets" {
 
   secrets = {
     bedrock_config = jsonencode({
-      model_id = "us.anthropic.claude-haiku-4-5-v1:0"
+      model_id = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
       region   = var.aws_region
     })
     api_endpoints = jsonencode({
@@ -177,7 +177,7 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/us.anthropic.claude-haiku-4-5-v1:0"
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ]
       }
     ]
