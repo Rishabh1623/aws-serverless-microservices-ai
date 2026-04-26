@@ -1,0 +1,57 @@
+# ========================================
+# EC2 Deployment Commands - Copy & Paste
+# ========================================
+
+# Step 1: Pull the latest changes (should work now!)
+cd ~/aws-serverless-microservices-ai
+git pull origin main
+
+# Step 2: Verify the changes
+cat agent-service/requirements.txt | grep opentelemetry
+
+# Expected output:
+# opentelemetry-api>=1.30.0,<2.0.0
+# opentelemetry-sdk>=1.30.0,<2.0.0
+# opentelemetry-instrumentation-threading>=0.51b0,<1.0.0
+
+# Step 3: Build Lambda package
+cd agent-service
+rm -rf build agent-service-lambda.zip
+mkdir -p build
+cp -r src/agent_handler/* build/
+pip3 install -r requirements.txt -t build/ --platform manylinux2014_x86_64 --only-binary=:all: --upgrade
+
+# Step 4: Create deployment package
+cd build
+zip -r ../agent-service-lambda.zip . -x "*.pyc" "*__pycache__*" "*.dist-info/*"
+cd ..
+
+# Step 5: Check package size (should be ~15-20 MB)
+ls -lh agent-service-lambda.zip
+
+# Step 6: Deploy with Terraform
+cd ../terraform/agent-service/dev
+terraform apply -auto-approve
+
+# Step 7: Test the fix
+API_ENDPOINT=$(terraform output -raw api_endpoint)
+echo "Testing: $API_ENDPOINT"
+curl -X POST "$API_ENDPOINT" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Hello, I need a hotel in Paris","userId":"test-user","sessionId":"test-session"}'
+
+# Step 8: Check logs (optional)
+aws logs tail /aws/lambda/agent-service-dev --follow --since 5m
+
+# ========================================
+# Expected Success Output
+# ========================================
+# HTTP 200 with JSON response containing:
+# {
+#   "response": "I'd be happy to help you find a hotel in Paris! ...",
+#   "userId": "test-user",
+#   "sessionId": "test-session"
+# }
+#
+# NOT: {"message": "Internal Server Error"}
+# ========================================
