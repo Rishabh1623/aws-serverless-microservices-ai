@@ -125,7 +125,7 @@ def get_tools():
             hotel_api_url=os.environ.get('HOTEL_API_URL'),
             bedrock_model_id=os.environ.get(
                 'BEDROCK_MODEL_ID',
-                'anthropic.claude-sonnet-4-20250514-v1:0'
+                'anthropic.claude-3-haiku-20240307-v1:0'
             )
         )
     
@@ -134,7 +134,7 @@ def get_tools():
             hotel_api_url=os.environ.get('HOTEL_API_URL'),
             bedrock_model_id=os.environ.get(
                 'BEDROCK_MODEL_ID',
-                'anthropic.claude-sonnet-4-20250514-v1:0'
+                'anthropic.claude-3-haiku-20240307-v1:0'
             )
         )
     
@@ -179,7 +179,7 @@ def get_agent():
             tools=get_tools(),
             model=os.environ.get(
                 'BEDROCK_MODEL_ID',
-                'anthropic.claude-sonnet-4-20250514-v1:0'
+                'anthropic.claude-3-haiku-20240307-v1:0'
             )
         )
     
