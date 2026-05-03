@@ -177,7 +177,7 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+          "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ]
       }
     ]
