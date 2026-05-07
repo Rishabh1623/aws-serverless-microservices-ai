@@ -87,15 +87,17 @@ resource "aws_lambda_function" "agent_package" {
   # Environment variables
   environment {
     variables = {
-      HOTEL_API_URL      = local.hotel_api_url
-      CART_API_URL       = local.cart_api_url
-      ORDER_API_URL      = local.order_api_url
-      PAYMENT_API_URL    = local.payment_api_url
-      BEDROCK_MODEL_ID   = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-      CONVERSATION_TABLE = aws_dynamodb_table.conversations.name
-      SECRETS_ARN        = module.secrets.secret_arns["bedrock_config"]
-      LOG_LEVEL          = "INFO"
-      BEDROCK_REGION     = var.aws_region
+      HOTEL_API_URL         = local.hotel_api_url
+      CART_API_URL          = local.cart_api_url
+      ORDER_API_URL         = local.order_api_url
+      PAYMENT_API_URL       = local.payment_api_url
+      BEDROCK_MODEL_ID      = "anthropic.claude-3-haiku-20240307-v1:0"
+      CONVERSATION_TABLE    = aws_dynamodb_table.conversations.name
+      SECRETS_ARN           = module.secrets.secret_arns["bedrock_config"]
+      LOG_LEVEL             = "INFO"
+      BEDROCK_REGION        = var.aws_region
+      USE_ANTHROPIC_DIRECT  = "true"  # Bypass Bedrock billing issues
+      ANTHROPIC_API_KEY     = var.anthropic_api_key
     }
   }
 
@@ -177,6 +179,7 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
           "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ]
       }

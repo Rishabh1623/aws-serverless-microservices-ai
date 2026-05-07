@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "anthropic_api_key" {
+  description = "Anthropic API key for direct API access (bypasses Bedrock billing issues)"
+  type        = string
+  sensitive   = true
+}
+
 variable "hotel_api_url" {
   description = "Hotel Service API URL"
   type        = string
