@@ -188,11 +188,13 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          # Claude Sonnet 4 (primary model)
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/us.anthropic.claude-sonnet-4-20250514-v1:0",
+          # Claude Sonnet 4 - Foundation Model (what Strands SDK uses)
+          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0",
+          # Claude Sonnet 4 - Inference Profile (alternative)
           "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0",
-          # Claude Haiku (fallback model)
+          # Claude Haiku - Foundation Model (fallback)
           "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
+          # Claude Haiku - Inference Profile (fallback)
           "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ]
       }
