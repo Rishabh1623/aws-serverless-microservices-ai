@@ -176,9 +176,10 @@ def get_agent():
     
     if _agent is None:
         # Use AWS Bedrock (IAM-based authentication)
+        # Using Claude 3 Haiku - fast, cost-effective, and already enabled
         bedrock_model_id = os.environ.get(
             'BEDROCK_MODEL_ID',
-            'us.anthropic.claude-sonnet-4-20250514-v1:0'  # Claude Sonnet 4 (latest)
+            'anthropic.claude-3-haiku-20240307-v1:0'  # Claude 3 Haiku (fast & enabled)
         )
         
         logger.info(f"Using AWS Bedrock with model: {bedrock_model_id}")
