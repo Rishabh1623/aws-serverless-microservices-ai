@@ -1,0 +1,39 @@
+version: 0.2
+
+# AWS CodeBuild specification for building Lambda package
+# Runs on Amazon Linux 2, ensuring binary compatibility with Lambda
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+    commands:
+      - echo "Installing build dependencies..."
+      - pip install --upgrade pip
+      
+  build:
+    commands:
+      - echo "Building Lambda Layer..."
+      - cd $CODEBUILD_SRC_DIR/agent-service
+      - mkdir -p layer/python
+      - pip install strands-agents anthropic pydantic opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-threading -t layer/python/ --upgrade
+      - cd layer
+      - zip -r ../layer.zip python/
+      - cd ..
+      
+      - echo "Building Lambda Package..."
+      - mkdir -p build
+      - pip install boto3 requests python-json-logger -t build/ --upgrade
+      - cp -r src/agent_handler/* build/
+      - cd build
+      - zip -r ../agent-service-lambda.zip .
+      - cd ..
+      
+      - echo "Build complete!"
+      - ls -lh *.zip
+
+artifacts:
+  files:
+    - agent-service/layer.zip
+    - agent-service/agent-service-lambda.zip
+  name: lambda-packages

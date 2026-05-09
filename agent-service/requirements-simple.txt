@@ -1,0 +1,14 @@
+# Simplified requirements - NO Strands SDK (has pydantic issues)
+# Use Anthropic SDK directly instead
+
+# Anthropic SDK for Claude API
+anthropic>=0.39.0
+
+# AWS SDK
+boto3>=1.34.0
+
+# HTTP requests
+requests>=2.31.0
+
+# JSON logging
+python-json-logger>=2.0.7
