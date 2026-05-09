@@ -18,7 +18,6 @@ import logging
 from typing import Dict, Any
 
 from strands.agent import Agent
-from anthropic import Anthropic
 from tools.travel_planner_tools import TravelPlannerTools
 from tools.upselling_tools import UpsellingTools
 from conversation_manager import ConversationManager
@@ -170,39 +169,27 @@ def get_agent():
     """
     Initialize Strands Agent (lazy loading)
     
-    Uses Anthropic API directly to bypass AWS Bedrock billing issues.
-    Strands SDK supports both Bedrock and Anthropic providers.
+    Uses AWS Bedrock with IAM authentication (no API keys needed).
+    Strands SDK defaults to Bedrock when no client is specified.
     """
     global _agent
     
     if _agent is None:
-        # Check if we should use Anthropic direct API or Bedrock
-        use_anthropic_direct = os.environ.get('USE_ANTHROPIC_DIRECT', 'true').lower() == 'true'
+        # Use AWS Bedrock (IAM-based authentication)
+        bedrock_model_id = os.environ.get(
+            'BEDROCK_MODEL_ID',
+            'us.anthropic.claude-sonnet-4-20250514-v1:0'  # Claude Sonnet 4 (latest)
+        )
         
-        if use_anthropic_direct:
-            # Use Anthropic API directly (bypasses Bedrock billing)
-            anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
-            if not anthropic_api_key:
-                raise ValueError("ANTHROPIC_API_KEY environment variable is required")
-            
-            logger.info("Using Anthropic API directly (bypassing Bedrock)")
-            _agent = Agent(
-                system_prompt=SYSTEM_PROMPT,
-                tools=get_tools(),
-                model="claude-3-5-haiku-20241022",  # Anthropic model ID format
-                client=Anthropic(api_key=anthropic_api_key)
-            )
-        else:
-            # Use AWS Bedrock (original approach)
-            logger.info("Using AWS Bedrock")
-            _agent = Agent(
-                system_prompt=SYSTEM_PROMPT,
-                tools=get_tools(),
-                model=os.environ.get(
-                    'BEDROCK_MODEL_ID',
-                    'anthropic.claude-3-haiku-20240307-v1:0'
-                )
-            )
+        logger.info(f"Using AWS Bedrock with model: {bedrock_model_id}")
+        
+        # Strands Agent defaults to Bedrock when no client is specified
+        # Uses boto3 credentials from Lambda execution role
+        _agent = Agent(
+            system_prompt=SYSTEM_PROMPT,
+            tools=get_tools(),
+            model=bedrock_model_id
+        )
     
     return _agent
 
