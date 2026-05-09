@@ -102,7 +102,7 @@ resource "aws_lambda_function" "agent_package" {
       CART_API_URL          = local.cart_api_url
       ORDER_API_URL         = local.order_api_url
       PAYMENT_API_URL       = local.payment_api_url
-      BEDROCK_MODEL_ID      = "us.anthropic.claude-sonnet-4-20250514-v1:0"  # Claude Sonnet 4
+      BEDROCK_MODEL_ID      = "anthropic.claude-3-haiku-20240307-v1:0"  # Claude 3 Haiku (fast & enabled)
       CONVERSATION_TABLE    = aws_dynamodb_table.conversations.name
       SECRETS_ARN           = module.secrets.secret_arns["bedrock_config"]
       LOG_LEVEL             = "INFO"
@@ -188,13 +188,16 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          # Allow all Claude Sonnet 4 models across all regions
+          # Allow Claude 3 Haiku (primary model - already enabled)
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/anthropic.claude-3-haiku-*",
+          # Allow all Claude Haiku models across all regions
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-*",
+          # Allow Claude Sonnet 4 (if marketplace subscription is added later)
           "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-*",
           "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/global.anthropic.claude-sonnet-4-*",
-          # Allow all Claude Haiku models across all regions (fallback)
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-*"
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/global.anthropic.claude-sonnet-4-*"
         ]
       }
     ]
