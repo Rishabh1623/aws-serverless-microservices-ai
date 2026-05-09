@@ -36,9 +36,10 @@ EOF
 # Build using official AWS Lambda Python 3.10 Docker image
 echo "📦 Installing dependencies in Lambda-compatible environment..."
 docker run --rm \
+  --entrypoint /bin/bash \
   -v "$LAYER_DIR":/var/task \
   public.ecr.aws/lambda/python:3.10 \
-  bash -c "pip install -r /var/task/requirements.txt -t /var/task/python/ --no-cache-dir && rm /var/task/requirements.txt"
+  -c "pip install -r /var/task/requirements.txt -t /var/task/python/ --no-cache-dir && rm /var/task/requirements.txt"
 
 # Create layer zip
 echo "📦 Creating layer zip..."
