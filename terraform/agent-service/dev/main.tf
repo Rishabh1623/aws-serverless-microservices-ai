@@ -63,6 +63,14 @@ resource "null_resource" "check_lambda_package" {
   }
 }
 
+# Lambda Layer with heavy dependencies (Strands, Anthropic, Pydantic)
+resource "aws_lambda_layer_version" "dependencies" {
+  filename            = "${path.module}/../../../agent-service/layer.zip"
+  layer_name          = "strands-dependencies-${local.environment}"
+  compatible_runtimes = ["python3.10"]
+  description         = "Strands Agents SDK, Anthropic, Pydantic, OpenTelemetry"
+}
+
 resource "aws_lambda_function" "agent_package" {
   depends_on = [null_resource.check_lambda_package]
   
@@ -76,6 +84,9 @@ resource "aws_lambda_function" "agent_package" {
   # Runtime configuration
   runtime = "python3.10"  # Changed from 3.11 to avoid OpenTelemetry PEP 479 bug
   handler = "app.lambda_handler"
+  
+  # Lambda Layer with dependencies
+  layers = [aws_lambda_layer_version.dependencies.arn]
 
   # Resource allocation
   memory_size = 512 # MB - Strands Agents needs more memory
