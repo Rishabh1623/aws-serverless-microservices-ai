@@ -1,5 +1,6 @@
 # AWS Strands Agents SDK (Official AWS open-source)
-strands-agents>=0.1.0
+strands-agents>=1.0.0
+strands-agents-tools>=0.2.0
 
 # Anthropic SDK for direct API access (bypasses Bedrock billing issues)
 anthropic>=0.39.0

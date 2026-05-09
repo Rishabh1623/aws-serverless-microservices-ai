@@ -18,7 +18,7 @@ phases:
       
       # Build Lambda Layer
       - mkdir -p layer/python
-      - pip install strands-agents anthropic pydantic opentelemetry-api opentelemetry-sdk -t layer/python/ --upgrade
+      - pip install strands-agents strands-agents-tools anthropic pydantic opentelemetry-api opentelemetry-sdk -t layer/python/ --upgrade
       - cd layer
       - zip -r ../layer.zip python/
       - cd ..
