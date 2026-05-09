@@ -14,7 +14,7 @@ terraform {
 
   # Remote backend for state management with locking
   backend "s3" {
-    bucket         = "terraform-state-600105205879"
+    bucket         = "terraform-state-955510722779"
     key            = "order-service/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true

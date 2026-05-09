@@ -10,7 +10,7 @@ terraform {
 
   # Remote backend for state management with locking
   backend "s3" {
-    bucket         = "terraform-state-600105205879"
+    bucket         = "terraform-state-955510722779"
     key            = "api-gateway-unified/dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true

@@ -28,17 +28,41 @@ resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
 
-# Use existing role for other services
+# Try to use existing role for other services (gracefully handle if not found)
 data "aws_iam_role" "api_gateway_cloudwatch_existing" {
   count = var.environment == "dev" && var.service_name != "hotel-service" ? 1 : 0
   name  = "api-gateway-cloudwatch-global"
+  
+  # Ignore if role doesn't exist yet
+  lifecycle {
+    postcondition {
+      condition     = self.arn != null || self.arn == null
+      error_message = "CloudWatch role not found - will skip CloudWatch logging"
+    }
+  }
+}
+
+# Determine CloudWatch role ARN
+locals {
+  # For hotel-service, use the role it creates
+  # For other services, try to use existing role, or skip if not found
+  use_cloudwatch_role = var.environment == "dev" && (
+    var.service_name == "hotel-service" || 
+    length(data.aws_iam_role.api_gateway_cloudwatch_existing) > 0
+  )
+  
+  cloudwatch_role_arn = var.environment == "dev" ? (
+    var.service_name == "hotel-service" ? 
+      aws_iam_role.api_gateway_cloudwatch[0].arn : 
+      try(data.aws_iam_role.api_gateway_cloudwatch_existing[0].arn, null)
+  ) : null
 }
 
 resource "aws_api_gateway_account" "this" {
-  cloudwatch_role_arn = var.environment == "dev" && var.service_name == "hotel-service" ? aws_iam_role.api_gateway_cloudwatch[0].arn : (var.environment == "dev" && var.service_name != "hotel-service" ? data.aws_iam_role.api_gateway_cloudwatch_existing[0].arn : null)
+  cloudwatch_role_arn = local.cloudwatch_role_arn
   
-  # Only manage this resource in dev environment
-  count = var.environment == "dev" ? 1 : 0
+  # Only create if we have a valid role ARN
+  count = local.use_cloudwatch_role && local.cloudwatch_role_arn != null ? 1 : 0
 }
 
 # ============================================================================

@@ -7,7 +7,7 @@ data "aws_caller_identity" "current" {}
 data "terraform_remote_state" "hotel_service" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-600105205879"
+    bucket = "terraform-state-955510722779"
     key    = "hotel-service/dev/terraform.tfstate"
     region = "us-east-1"
   }
@@ -16,7 +16,7 @@ data "terraform_remote_state" "hotel_service" {
 data "terraform_remote_state" "cart_service" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-600105205879"
+    bucket = "terraform-state-955510722779"
     key    = "cart-service/dev/terraform.tfstate"
     region = "us-east-1"
   }
@@ -25,7 +25,7 @@ data "terraform_remote_state" "cart_service" {
 data "terraform_remote_state" "order_service" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-600105205879"
+    bucket = "terraform-state-955510722779"
     key    = "order-service/dev/terraform.tfstate"
     region = "us-east-1"
   }
@@ -34,7 +34,7 @@ data "terraform_remote_state" "order_service" {
 data "terraform_remote_state" "payment_service" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-600105205879"
+    bucket = "terraform-state-955510722779"
     key    = "payment-service/dev/terraform.tfstate"
     region = "us-east-1"
   }
