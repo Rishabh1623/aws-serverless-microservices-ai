@@ -35,7 +35,7 @@ resource "aws_lambda_function" "agent" {
   filename         = "${path.module}/../../../agent-service-lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../../agent-service-lambda.zip")
   
-  runtime = "python3.11"
+  runtime = "python3.10"
   handler = "app.lambda_handler"
   
   # Production resource allocation
@@ -121,8 +121,8 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-*"
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ]
       }
     ]

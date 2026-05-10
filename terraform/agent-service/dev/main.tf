@@ -102,7 +102,7 @@ resource "aws_lambda_function" "agent_package" {
       CART_API_URL          = local.cart_api_url
       ORDER_API_URL         = local.order_api_url
       PAYMENT_API_URL       = local.payment_api_url
-      BEDROCK_MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"  # Claude Haiku 4.5 (cross-region inference)
+      BEDROCK_MODEL_ID      = var.bedrock_model_id
       CONVERSATION_TABLE    = aws_dynamodb_table.conversations.name
       SECRETS_ARN           = module.secrets.secret_arns["bedrock_config"]
       LOG_LEVEL             = "INFO"
@@ -128,8 +128,7 @@ module "secrets" {
 
   secrets = {
     bedrock_config = jsonencode({
-      model_id = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-      region   = var.aws_region
+      region = var.aws_region
     })
     api_endpoints = jsonencode({
       hotel_api_url   = local.hotel_api_url
@@ -188,16 +187,8 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          # Allow Claude 3 Haiku (primary model - already enabled)
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/anthropic.claude-3-haiku-*",
-          # Allow all Claude Haiku models across all regions
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-*",
-          # Allow Claude Sonnet 4 (if marketplace subscription is added later)
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/global.anthropic.claude-sonnet-4-*"
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
         ]
       }
     ]

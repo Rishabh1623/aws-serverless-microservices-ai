@@ -27,3 +27,9 @@ variable "payment_api_url" {
   type        = string
   default     = "https://api.example.com/payments"
 }
+
+variable "bedrock_model_id" {
+  description = "AWS Bedrock model ID for the AI agent"
+  type        = string
+  default     = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+}
