@@ -46,7 +46,7 @@ variable "lambda_reserved_concurrency" {
 variable "bedrock_model_id" {
   description = "AWS Bedrock model ID"
   type        = string
-  default     = "anthropic.claude-3-sonnet-20240229-v1:0"
+  default     = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 }
 
 # Monitoring
