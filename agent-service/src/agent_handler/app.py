@@ -16,11 +16,14 @@ import json
 import os
 import logging
 from typing import Dict, Any
+import boto3
+from botocore.exceptions import ClientError
 
 from strands.agent import Agent
 from tools.travel_planner_tools import TravelPlannerTools
 from tools.upselling_tools import UpsellingTools
 from conversation_manager import ConversationManager
+from bedrock_resilience import with_bedrock_resilience, BedrockResilienceError
 
 # Configure logging
 logger = logging.getLogger()
@@ -120,13 +123,17 @@ def get_tools():
     """
     global _travel_planner_tools, _upselling_tools
     
+    # Get Bedrock region from environment
+    bedrock_region = os.environ.get('BEDROCK_REGION', 'us-east-1')
+    
     if _travel_planner_tools is None:
         _travel_planner_tools = TravelPlannerTools(
             hotel_api_url=os.environ.get('HOTEL_API_URL'),
             bedrock_model_id=os.environ.get(
                 'BEDROCK_MODEL_ID',
-                'us.anthropic.claude-haiku-4-5-20251001-v1:0'
-            )
+                'anthropic.claude-haiku-4-5-20251001-v1:0'
+            ),
+            bedrock_region=bedrock_region
         )
     
     if _upselling_tools is None:
@@ -134,8 +141,9 @@ def get_tools():
             hotel_api_url=os.environ.get('HOTEL_API_URL'),
             bedrock_model_id=os.environ.get(
                 'BEDROCK_MODEL_ID',
-                'us.anthropic.claude-haiku-4-5-20251001-v1:0'
-            )
+                'anthropic.claude-haiku-4-5-20251001-v1:0'
+            ),
+            bedrock_region=bedrock_region
         )
     
     return [
@@ -165,31 +173,59 @@ def get_conversation_manager():
     return _conversation_manager
 
 
-def get_agent():
+def get_agent(region: str = None):
     """
     Initialize Strands Agent (lazy loading)
     
     Uses AWS Bedrock with IAM authentication (no API keys needed).
     Strands SDK defaults to Bedrock when no client is specified.
+    
+    Args:
+        region: AWS region for Bedrock (defaults to BEDROCK_REGION env var)
     """
     global _agent
     
-    if _agent is None:
-        # Use AWS Bedrock (IAM-based authentication)
-        # Using Claude 3 Haiku - fast, cost-effective, and already enabled
+    # If region is specified, create new agent for that region
+    if region is not None:
         bedrock_model_id = os.environ.get(
             'BEDROCK_MODEL_ID',
-            'anthropic.claude-3-haiku-20240307-v1:0'  # Claude 3 Haiku (fast & enabled)
+            'anthropic.claude-haiku-4-5-20251001-v1:0'  # Claude Haiku 4.5 (ACTIVE)
         )
         
-        logger.info(f"Using AWS Bedrock with model: {bedrock_model_id}")
+        logger.info(f"Creating Strands Agent for region {region} with model: {bedrock_model_id}")
         
-        # Strands Agent defaults to Bedrock when no client is specified
-        # Uses boto3 credentials from Lambda execution role
+        # Create Bedrock client for specific region
+        bedrock_client = boto3.client('bedrock-runtime', region_name=region)
+        
+        return Agent(
+            system_prompt=SYSTEM_PROMPT,
+            tools=get_tools(),
+            model=bedrock_model_id,
+            client=bedrock_client
+        )
+    
+    # Default: use cached agent
+    if _agent is None:
+        # Use AWS Bedrock (IAM-based authentication)
+        # Using Claude Haiku 4.5 - latest active model
+        bedrock_model_id = os.environ.get(
+            'BEDROCK_MODEL_ID',
+            'anthropic.claude-haiku-4-5-20251001-v1:0'  # Claude Haiku 4.5 (ACTIVE)
+        )
+        
+        bedrock_region = os.environ.get('BEDROCK_REGION', 'us-east-1')
+        
+        logger.info(f"Using AWS Bedrock in {bedrock_region} with model: {bedrock_model_id}")
+        
+        # Create Bedrock client with explicit region
+        bedrock_client = boto3.client('bedrock-runtime', region_name=bedrock_region)
+        
+        # Strands Agent with explicit Bedrock client
         _agent = Agent(
             system_prompt=SYSTEM_PROMPT,
             tools=get_tools(),
-            model=bedrock_model_id
+            model=bedrock_model_id,
+            client=bedrock_client
         )
     
     return _agent
@@ -254,11 +290,50 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             context_note = f"\n\n[User Context: Interested in {', '.join(prefs.get('favorite_categories', []))}, typical budget: ${prefs.get('typical_budget', {}).get('max', 'N/A')}]"
             enhanced_message += context_note
         
-        # Get agent instance
-        agent = get_agent()
+        # Get primary region and fallback regions from environment
+        primary_region = os.environ.get('BEDROCK_REGION', 'us-east-1')
+        fallback_regions_str = os.environ.get('BEDROCK_FALLBACK_REGIONS', 'us-west-2')
+        fallback_regions = [r.strip() for r in fallback_regions_str.split(',') if r.strip()]
         
-        # Process message through agent
-        response = agent(enhanced_message)
+        logger.info(f"Bedrock config - Primary: {primary_region}, Fallback: {fallback_regions}")
+        
+        # Define function to invoke agent with specific region
+        def invoke_agent_with_region(region: str):
+            """Invoke agent with specific region"""
+            logger.info(f"Invoking agent in region: {region}")
+            agent = get_agent(region=region)
+            return agent(enhanced_message)
+        
+        # Process message through agent with resilience
+        try:
+            response = with_bedrock_resilience(
+                func=invoke_agent_with_region,
+                enable_retry=True,
+                enable_multi_region=True,
+                primary_region=primary_region,
+                fallback_regions=fallback_regions,
+                max_retries=3
+            )
+        except BedrockResilienceError as e:
+            logger.error(f"All Bedrock regions failed: {str(e)}")
+            # Return graceful error to user
+            return {
+                'statusCode': 503,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': 'service_unavailable',
+                    'message': 'AI assistant is temporarily unavailable due to high demand. Please try again in a few moments or use the traditional hotel search.',
+                    'fallback_urls': {
+                        'hotels': os.environ.get('HOTEL_API_URL', ''),
+                        'cart': os.environ.get('CART_API_URL', ''),
+                        'orders': os.environ.get('ORDER_API_URL', '')
+                    },
+                    'retry_after': 60  # Suggest retry after 60 seconds
+                })
+            }
         
         # Extract response text
         response_text = response.text if hasattr(response, 'text') else str(response)

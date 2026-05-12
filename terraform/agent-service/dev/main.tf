@@ -98,15 +98,16 @@ resource "aws_lambda_function" "agent_package" {
   # Environment variables
   environment {
     variables = {
-      HOTEL_API_URL         = local.hotel_api_url
-      CART_API_URL          = local.cart_api_url
-      ORDER_API_URL         = local.order_api_url
-      PAYMENT_API_URL       = local.payment_api_url
-      BEDROCK_MODEL_ID      = var.bedrock_model_id
-      CONVERSATION_TABLE    = aws_dynamodb_table.conversations.name
-      SECRETS_ARN           = module.secrets.secret_arns["bedrock_config"]
-      LOG_LEVEL             = "INFO"
-      BEDROCK_REGION        = var.aws_region
+      HOTEL_API_URL              = local.hotel_api_url
+      CART_API_URL               = local.cart_api_url
+      ORDER_API_URL              = local.order_api_url
+      PAYMENT_API_URL            = local.payment_api_url
+      BEDROCK_MODEL_ID           = var.bedrock_model_id
+      CONVERSATION_TABLE         = aws_dynamodb_table.conversations.name
+      SECRETS_ARN                = module.secrets.secret_arns["bedrock_config"]
+      LOG_LEVEL                  = "INFO"
+      BEDROCK_REGION             = var.aws_region
+      BEDROCK_FALLBACK_REGIONS   = "us-west-2"  # Fallback region for throttling
     }
   }
 
@@ -172,7 +173,7 @@ resource "aws_iam_role_policy_attachment" "lambda_xray" {
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
-# Bedrock permissions
+# Bedrock permissions (multi-region support for fallback)
 resource "aws_iam_role_policy" "bedrock_access" {
   name = "${local.service_name}-${local.environment}-bedrock-policy"
   role = aws_iam_role.agent_lambda.id
@@ -187,8 +188,19 @@ resource "aws_iam_role_policy" "bedrock_access" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = [
-          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+          # Allow Claude Haiku 4.5 (primary - ACTIVE model) in ALL regions
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/anthropic.claude-haiku-4-5-*",
+          # Allow Claude 3 Haiku (legacy fallback) in ALL regions
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/anthropic.claude-3-haiku-*",
+          # Allow all Claude Haiku models across ALL regions (for multi-region fallback)
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-*",
+          # Allow Claude Sonnet 4 (if marketplace subscription is added later)
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-sonnet-4-*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/global.anthropic.claude-sonnet-4-*"
         ]
       }
     ]

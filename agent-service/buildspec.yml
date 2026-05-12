@@ -16,16 +16,15 @@ phases:
       - echo "Building Lambda Layer with dependencies..."
       - cd $CODEBUILD_SRC_DIR/agent-service
       
-      # Build Lambda Layer
+      # Build Lambda Layer with ALL dependencies from requirements.txt
       - mkdir -p layer/python
-      - pip install strands-agents strands-agents-tools anthropic pydantic opentelemetry-api opentelemetry-sdk -t layer/python/ --upgrade
+      - pip install -r requirements.txt -t layer/python/ --platform manylinux2014_x86_64 --only-binary=:all: --upgrade
       - cd layer
       - zip -r ../layer.zip python/
       - cd ..
       
-      # Build Lambda Package (code only)
+      # Build Lambda Package (code only - no dependencies)
       - mkdir -p build
-      - pip install boto3 requests python-json-logger -t build/ --upgrade
       - cp -r src/agent_handler/* build/
       - cd build
       - zip -r ../agent-service-lambda.zip .

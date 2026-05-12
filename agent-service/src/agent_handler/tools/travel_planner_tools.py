@@ -27,16 +27,18 @@ class TravelPlannerTools:
     - Loyalty rewards integration
     """
     
-    def __init__(self, hotel_api_url: str, bedrock_model_id: str):
+    def __init__(self, hotel_api_url: str, bedrock_model_id: str, bedrock_region: str = 'us-east-1'):
         """
         Initialize Travel Planner Tools
         
         Args:
             hotel_api_url: Hotel Service API URL
             bedrock_model_id: Bedrock model for AI recommendations
+            bedrock_region: AWS region for Bedrock (default: us-east-1)
         """
         self.hotel_api_url = hotel_api_url.rstrip('/')
-        self.bedrock = boto3.client('bedrock-runtime')
+        self.bedrock_region = bedrock_region
+        self.bedrock = boto3.client('bedrock-runtime', region_name=bedrock_region)
         self.dynamodb = boto3.resource('dynamodb')
         self.model_id = bedrock_model_id
         self.timeout = 10

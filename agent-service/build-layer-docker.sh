@@ -33,13 +33,12 @@ opentelemetry-sdk>=1.30.0
 opentelemetry-instrumentation-threading>=0.51b0
 EOF
 
-# Build using official AWS Lambda Python 3.10 Docker image
+# Build using Amazon Linux 2 Docker image (simpler than Lambda image)
 echo "📦 Installing dependencies in Lambda-compatible environment..."
 docker run --rm \
-  --entrypoint /bin/bash \
-  -v "$LAYER_DIR":/var/task \
-  public.ecr.aws/lambda/python:3.10 \
-  -c "pip install -r /var/task/requirements.txt -t /var/task/python/ --no-cache-dir && rm /var/task/requirements.txt"
+  -v "$LAYER_DIR":/build \
+  amazonlinux:2 \
+  bash -c "yum install -y python3 python3-pip zip && pip3 install -r /build/requirements.txt -t /build/python/ --no-cache-dir && rm /build/requirements.txt"
 
 # Create layer zip
 echo "📦 Creating layer zip..."
